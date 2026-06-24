@@ -13,7 +13,7 @@ interface AdjustmentFormProps {
 }
 
 export default function AdjustmentForm({ onSuccess }: AdjustmentFormProps) {
-  const { data: inventoryData } = useInventory({ limit: 200 });
+  const { data: inventoryData } = useInventory({ limit: 100 });
   const inventoryList = Array.isArray(inventoryData?.items) ? inventoryData.items : [];
   const adjustMutation = useAdjustStock();
   const [variantId, setVariantId] = useState("");

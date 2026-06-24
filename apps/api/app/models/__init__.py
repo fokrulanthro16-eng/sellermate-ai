@@ -7,6 +7,7 @@ from app.models.order import Order, OrderItem, OrderStatusHistory  # noqa: F401
 from app.models.assistant import Conversation, Message  # noqa: F401
 from app.models.hermit import HermitInsight  # noqa: F401
 from app.models.strategic_insight import StrategicInsight  # noqa: F401
+from app.models.review import Review  # noqa: F401
 
 __all__ = [
     "Merchant",
@@ -21,4 +22,5 @@ __all__ = [
     "Message",
     "HermitInsight",
     "StrategicInsight",
+    "Review",
 ]

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Warehouse, ShoppingCart,
-  Users, BarChart3, Bot, Shield, Settings, Zap,
+  Users, BarChart3, Bot, Shield, Settings, Zap, Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LangContext";
@@ -28,6 +28,7 @@ const coreNav: NavItem[] = [
 const aiNav: NavItem[] = [
   { href: "/assistant",  icon: Bot,    labelKey: "assistant" },
   { href: "/ai-center",  icon: Shield, labelKey: "aiCenter"  },
+  { href: "/reviews",    icon: Star,   labelKey: "reviews"   },
 ];
 
 function NavLink({ item }: { item: NavItem }) {

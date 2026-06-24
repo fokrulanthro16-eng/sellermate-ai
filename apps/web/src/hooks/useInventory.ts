@@ -26,7 +26,7 @@ async function fetchLogs(params: { page?: number; limit?: number; variant_id?: s
 }
 
 async function adjustStock(items: AdjustmentItem[]) {
-  const { data } = await api.post<ApiResponse<{ adjusted: number }>>("/inventory/adjust", { items });
+  const { data } = await api.post<ApiResponse<{ adjusted: number }>>("/inventory/adjust", { adjustments: items });
   return data.data;
 }
 

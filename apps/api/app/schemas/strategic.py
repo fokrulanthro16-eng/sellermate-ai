@@ -90,6 +90,17 @@ class StrategicInsightOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PriceCheckOut(BaseModel):
+    verdict: str
+    avg_discount_pct: float
+    heavily_discounted_count: int
+    total_products_analyzed: int
+    recommendations: list[str] = []
+    price_items: list[dict] = []
+    explanation_bn: str = ""
+    explanation_en: str = ""
+
+
 class StrategicSummaryOut(BaseModel):
     trust_score: int
     fraud_score: int

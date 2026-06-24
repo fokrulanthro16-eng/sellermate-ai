@@ -38,7 +38,7 @@ export default function TopProducts({ data, loading }: TopProductsProps) {
   const maxRevenue = data?.[0]?.total_revenue ?? 1;
 
   return (
-    <div className="glass-card rounded-2xl p-5 flex flex-col h-full">
+    <div className="admin-card p-4 flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">

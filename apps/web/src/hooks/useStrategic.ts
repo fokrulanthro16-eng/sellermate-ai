@@ -4,6 +4,17 @@ import api from "@/lib/api-client";
 import { getApiError } from "@/lib/utils";
 import type { StrategicRunResult, StrategicInsight, ApiResponse } from "@/types";
 
+export interface PriceCheckOut {
+  verdict: string;
+  avg_discount_pct: number;
+  heavily_discounted_count: number;
+  total_products_analyzed: number;
+  recommendations: string[];
+  price_items: { product_name: string; product_id: string; times_sold: number; avg_selling_price: number }[];
+  explanation_bn: string;
+  explanation_en: string;
+}
+
 const STR_KEY = "strategic";
 
 async function runAgents() {
@@ -79,6 +90,19 @@ export function useDemandOracle() {
   return useQuery({
     queryKey: [STR_KEY, "demand_oracle"],
     queryFn: () => fetchInsights("demand_oracle", 1).then((r) => r[0] ?? null),
+    retry: false,
+  });
+}
+
+async function fetchPriceCheck() {
+  const { data } = await api.get<ApiResponse<PriceCheckOut>>("/ai/strategic/price-check");
+  return data.data;
+}
+
+export function usePriceCheck() {
+  return useQuery({
+    queryKey: [STR_KEY, "price_check"],
+    queryFn: fetchPriceCheck,
     retry: false,
   });
 }

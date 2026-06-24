@@ -61,7 +61,7 @@ const variantConfig: Record<CardVariant, {
 
 function SkeletonCard() {
   return (
-    <div className="glass-card p-5">
+    <div className="admin-card p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="h-4 w-28 rounded-lg bg-muted animate-pulse" />
         <div className="h-10 w-10 rounded-xl bg-muted animate-pulse" />
@@ -91,7 +91,7 @@ export default function StatCard({
 
   return (
     <div className={cn(
-      "glass-card p-5 rounded-2xl border transition-all duration-300 hover:shadow-premium-hover group cursor-default",
+      "admin-card p-4 rounded-2xl border transition-all duration-300 hover:shadow-premium-hover group cursor-default",
       cfg.card,
     )}>
       {/* Top row: label + icon */}

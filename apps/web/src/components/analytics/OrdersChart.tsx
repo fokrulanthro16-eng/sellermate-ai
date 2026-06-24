@@ -26,7 +26,7 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
-    <div className="glass-card rounded-xl px-3 py-2 text-sm min-w-[120px] shadow-premium">
+    <div className="admin-card px-3 py-2 text-sm min-w-[120px]">
       <p className="font-semibold text-foreground">{name}</p>
       <p className="text-muted-foreground text-xs">{value} অর্ডার</p>
     </div>
@@ -51,7 +51,7 @@ export default function OrdersChart({ data, loading }: OrdersChartProps) {
 
   if (loading) {
     return (
-      <div className="glass-card rounded-2xl p-5 h-full">
+      <div className="admin-card p-4 h-full">
         <div className="flex items-center gap-3 mb-5">
           <div className="h-8 w-8 rounded-lg bg-muted animate-pulse" />
           <div className="h-4 w-32 rounded-lg bg-muted animate-pulse" />
@@ -65,7 +65,7 @@ export default function OrdersChart({ data, loading }: OrdersChartProps) {
   }
 
   return (
-    <div className="glass-card rounded-2xl p-5 h-full flex flex-col">
+    <div className="admin-card p-4 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className="h-8 w-8 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center">

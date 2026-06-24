@@ -114,7 +114,7 @@ export default function SettingsPage() {
 
           {/* Profile tab */}
           <TabsContent value="profile" className="mt-4">
-            <div className="glass-card rounded-2xl p-5 space-y-5">
+            <div className="admin-card p-5 space-y-5">
               <div className="flex items-center gap-3 pb-1">
                 <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Store className="h-4 w-4 text-primary" />
@@ -218,7 +218,7 @@ export default function SettingsPage() {
 
           {/* Security tab */}
           <TabsContent value="security" className="mt-4">
-            <div className="glass-card rounded-2xl p-5 space-y-4">
+            <div className="admin-card p-5 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
                   <Lock className="h-4 w-4 text-muted-foreground" />
@@ -240,7 +240,7 @@ export default function SettingsPage() {
 
           {/* Preferences tab */}
           <TabsContent value="preferences" className="mt-4">
-            <div className="glass-card rounded-2xl p-5 space-y-6">
+            <div className="admin-card p-5 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <SlidersHorizontal className="h-4 w-4 text-primary" />

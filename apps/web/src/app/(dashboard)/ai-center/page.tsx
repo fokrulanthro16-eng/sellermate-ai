@@ -3,7 +3,7 @@
 import {
   Loader2, ShieldAlert, Network, Play,
   CheckCircle2, AlertTriangle, Zap, TrendingUp, TrendingDown,
-  BarChart3, Package, Minus, CreditCard, ArrowRight,
+  BarChart3, Package, Minus, CreditCard, ArrowRight, Tag,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useTrustScore, useFraudReport, useRunAgents,
   useGrowthCoach, useMarginGuardian, useDemandOracle, useCreditReadiness,
+  usePriceCheck,
 } from "@/hooks/useStrategic";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LangContext";
@@ -162,6 +163,7 @@ export default function AICenterPage() {
   const { data: marginInsight, isLoading: marginLoading } = useMarginGuardian();
   const { data: demandInsight, isLoading: demandLoading } = useDemandOracle();
   const { data: creditInsight, isLoading: creditLoading } = useCreditReadiness();
+  const { data: priceData,     isLoading: priceLoading  } = usePriceCheck();
   const runAgents = useRunAgents();
 
   const trust  = trustInsight?.payload  as unknown as TrustScoreOut  | undefined;
@@ -171,6 +173,13 @@ export default function AICenterPage() {
   const demand = demandInsight?.payload as Record<string, unknown>   | undefined;
   const credit = creditInsight?.payload as Record<string, unknown>   | undefined;
 
+  const priceVerdictScore = priceData
+    ? priceData.verdict === "FAIR" ? 90
+      : priceData.verdict === "MODERATE" ? 65
+      : priceData.verdict === "HIGH_PRICING_RISK" ? 30
+      : 0
+    : 0;
+
   const scores = {
     trust:  Math.round(trustInsight?.score  ?? 0),
     fraud:  Math.round(fraud?.fraud_risk_score ?? 0),
@@ -178,6 +187,7 @@ export default function AICenterPage() {
     margin: Math.round(marginInsight?.score ?? 0),
     demand: Math.round(demandInsight?.score ?? 0),
     credit: Math.round(creditInsight?.score ?? 0),
+    price:  priceVerdictScore,
   };
 
   const trendIcon = (dir: string) => {
@@ -208,10 +218,11 @@ export default function AICenterPage() {
       </div>
 
       {/* Score Overview Row */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
         {[
           { label: label("ট্রাস্ট", "Trust"),    score: scores.trust,  color: "text-emerald-700 dark:text-emerald-400", bar: "bg-emerald-500", border: "border-l-emerald-500" },
           { label: label("ফ্রড", "Fraud"),       score: scores.fraud,  color: "text-red-700 dark:text-red-400",         bar: "bg-red-500",     border: "border-l-red-500" },
+          { label: label("মূল্য", "Price"),      score: scores.price,  color: "text-teal-700 dark:text-teal-400",       bar: "bg-teal-500",    border: "border-l-teal-500" },
           { label: label("প্রবৃদ্ধি", "Growth"), score: scores.growth, color: "text-blue-700 dark:text-blue-400",       bar: "bg-blue-500",    border: "border-l-blue-500" },
           { label: label("মার্জিন", "Margin"),   score: scores.margin, color: "text-violet-700 dark:text-violet-400",   bar: "bg-violet-500",  border: "border-l-violet-500" },
           { label: label("রিস্টক", "Restock"),   score: scores.demand, color: "text-amber-700 dark:text-amber-400",     bar: "bg-amber-500",   border: "border-l-amber-500" },
@@ -458,6 +469,50 @@ export default function AICenterPage() {
           )}
           {Array.isArray(credit?.improvement_tips) && (credit.improvement_tips as string[]).length > 0 && (
             <RecList items={credit.improvement_tips as string[]} lang={lang} color="indigo" />
+          )}
+        </AgentCard>
+
+        {/* Price Intelligence */}
+        <AgentCard
+          title={label("স্মার্ট মূল্য বিশ্লেষণ", "Smart Price Analysis")}
+          subtitle={label("মূল্য নির্ধারণের কৌশল পরীক্ষা", "Pricing strategy assessment")}
+          icon={Tag}
+          score={scores.price}
+          scoreColor={
+            scores.price >= 80 ? "bg-teal-500" :
+            scores.price >= 50 ? "bg-amber-500" : "bg-red-500"
+          }
+          loading={priceLoading}
+          empty={!priceData}
+          onRun={() => runAgents.mutate()}
+          running={runAgents.isPending}
+          accent="border-l-teal-500"
+        >
+          {priceData && (
+            <>
+              <div className={cn(
+                "mb-3 text-xs rounded p-2 border font-semibold flex items-center gap-2",
+                priceData.verdict === "FAIR"
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
+                  : priceData.verdict === "HIGH_PRICING_RISK"
+                  ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+                  : priceData.verdict === "INSUFFICIENT_DATA"
+                  ? "bg-muted border-border text-muted-foreground"
+                  : "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+              )}>
+                <Tag className="h-3 w-3 shrink-0" />
+                {priceData.verdict === "FAIR" ? label("মূল্য ঠিকঠাক", "Price looks fair") :
+                 priceData.verdict === "HIGH_PRICING_RISK" ? label("মূল্য সমীক্ষা প্রয়োজন", "High pricing risk") :
+                 priceData.verdict === "INSUFFICIENT_DATA" ? label("পর্যাপ্ত ডেটা নেই", "Not enough data yet") :
+                 label("মাঝারি পর্যায়ে", "Moderate pricing")}
+              </div>
+              <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                {lang === "bn" ? priceData.explanation_bn : priceData.explanation_en}
+              </p>
+              {priceData.recommendations.length > 0 && (
+                <RecList items={priceData.recommendations} lang={lang} color="teal" />
+              )}
+            </>
           )}
         </AgentCard>
 

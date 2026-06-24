@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import Date, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.customer import Customer
@@ -81,14 +81,17 @@ class GrowthCoach:
         growth_pct = ((rev_30 - rev_prev) / rev_prev * 100) if rev_prev > 0 else (100.0 if rev_30 > 0 else 0.0)
 
         # ── Daily revenue points for slope ──────────────────
+        # cast to Date avoids asyncpg parameterising the "day" literal separately in
+        # SELECT vs GROUP BY which PostgreSQL rejects as a grouping error.
+        day_col = cast(Order.created_at, Date)
         daily_r = await db.execute(
             select(
-                func.date_trunc("day", Order.created_at).label("day"),
+                day_col.label("day"),
                 func.coalesce(func.sum(Order.total_amount), 0).label("rev"),
             )
             .where(Order.merchant_id == merchant_id, Order.created_at >= since_30)
-            .group_by(func.date_trunc("day", Order.created_at))
-            .order_by(func.date_trunc("day", Order.created_at))
+            .group_by(day_col)
+            .order_by(day_col)
         )
         daily_values = [float(r.rev) for r in daily_r.all()]
         mean_daily   = sum(daily_values) / len(daily_values) if daily_values else 0.0

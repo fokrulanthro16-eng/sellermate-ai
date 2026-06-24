@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
 
         {/* Top Customers */}
         <div className="animate-slide-up animation-delay-200">
-          <div className="glass-card rounded-2xl p-5 h-full flex flex-col">
+          <div className="admin-card p-4 h-full flex flex-col">
             <div className="flex items-center gap-3 mb-5">
               <div className="h-8 w-8 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center">
                 <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" />

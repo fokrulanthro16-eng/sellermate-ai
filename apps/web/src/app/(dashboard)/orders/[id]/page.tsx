@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,8 +12,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/orders/StatusBadge";
 import OrderTimeline from "@/components/orders/OrderTimeline";
 import { useOrder, useChangeOrderStatus, useRecordPayment } from "@/hooks/useOrders";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { useSubmitReview } from "@/hooks/useReviews";
+import { formatCurrency, formatDateTime, cn } from "@/lib/utils";
 import type { OrderStatus, PaymentMethod } from "@/types";
+
+function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1,2,3,4,5].map((n) => (
+        <Star key={n}
+          className={cn("h-6 w-6 cursor-pointer transition-colors", (hover || value) >= n ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          onClick={() => onChange(n)}
+        />
+      ))}
+    </div>
+  );
+}
 
 const NEXT_STATUSES: Partial<Record<OrderStatus, { value: OrderStatus; label: string }[]>> = {
   PENDING: [{ value: "CONFIRMED", label: "নিশ্চিত করুন" }, { value: "CANCELLED", label: "বাতিল করুন" }],
@@ -28,8 +45,13 @@ export default function OrderDetailPage() {
   const { data: order, isLoading } = useOrder(id);
   const changeStatus = useChangeOrderStatus();
   const recordPayment = useRecordPayment();
+  const submitReview = useSubmitReview();
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("COD");
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewerName, setReviewerName] = useState("");
+  const [reviewDone, setReviewDone] = useState(false);
 
   if (isLoading) return (
     <div className="max-w-3xl mx-auto space-y-4">
@@ -137,6 +159,40 @@ export default function OrderDetailPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Review form — only for delivered orders */}
+      {order.status === "DELIVERED" && !reviewDone && (
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Star className="h-4 w-4 text-amber-500" />গ্রাহকের রিভিউ নিন</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">এই ডেলিভার হওয়া অর্ডারের জন্য গ্রাহকের রিভিউ রেকর্ড করুন।</p>
+            <div className="space-y-1">
+              <Label className="text-xs">রেটিং</Label>
+              <StarPicker value={reviewRating} onChange={setReviewRating} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">গ্রাহকের নাম (ঐচ্ছিক)</Label>
+              <Input className="h-8 text-sm" placeholder="নাম..." value={reviewerName} onChange={(e) => setReviewerName(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">মন্তব্য (ঐচ্ছিক)</Label>
+              <Input className="h-8 text-sm" placeholder="গ্রাহকের মতামত..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+            </div>
+            <Button size="sm" disabled={reviewRating === 0 || submitReview.isPending}
+              onClick={async () => {
+                await submitReview.mutateAsync({ order_id: id, rating: reviewRating, comment: reviewComment || undefined, reviewer_name: reviewerName || undefined });
+                setReviewDone(true);
+              }}>
+              রিভিউ জমা দিন
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      {reviewDone && (
+        <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-3">
+          <CheckCircle2 className="h-4 w-4" /> রিভিউ সফলভাবে রেকর্ড হয়েছে
+        </div>
       )}
 
       {order.status_history && order.status_history.length > 0 && <OrderTimeline history={order.status_history} />}

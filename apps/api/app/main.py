@@ -33,6 +33,7 @@ from app.routers import (
     merchant,
     orders,
     products,
+    reviews,
     strategic,
     webhooks,
 )
@@ -99,6 +100,7 @@ app.include_router(analytics.router, prefix=f"{API_PREFIX}/analytics", tags=["an
 app.include_router(assistant.router, prefix=f"{API_PREFIX}/assistant", tags=["assistant"])
 app.include_router(hermit.router, prefix=f"{API_PREFIX}/ai", tags=["hermit"])
 app.include_router(strategic.router, prefix=f"{API_PREFIX}/ai/strategic", tags=["strategic"])
+app.include_router(reviews.router, prefix=f"{API_PREFIX}/reviews", tags=["reviews"])
 app.include_router(webhooks.router, prefix=f"{API_PREFIX}/webhooks", tags=["webhooks"])
 
 

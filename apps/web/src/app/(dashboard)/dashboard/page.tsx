@@ -7,14 +7,17 @@ import {
   useDashboard, useOrderBreakdown, useTopProducts, useInventoryHealth,
 } from "@/hooks/useAnalytics";
 import { useOrders } from "@/hooks/useOrders";
+import { useTrustScore } from "@/hooks/useStrategic";
 import { useLang } from "@/contexts/LangContext";
 import { formatCurrency, safeNum, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import TrustBadge from "@/components/trust/TrustBadge";
+import type { TrustScoreOut } from "@/types";
 import {
   ShoppingCart, Clock, Truck, AlertTriangle,
   TrendingUp, Banknote, Package, Plus, CheckCircle2,
-  ArrowRight, Sparkles,
+  ArrowRight, Sparkles, Shield,
 } from "lucide-react";
 
 /* ── tiny status pill ─────────────────────────────────────── */
@@ -51,8 +54,8 @@ export default function DashboardPage() {
   const { data: inv                        } = useInventoryHealth();
   const { data: top                        } = useTopProducts(from30, today);
   const { data: recentData                 } = useOrders({ page: 1, limit: 10 });
-  /* COD pending = orders unpaid with COD method */
   const { data: codData                    } = useOrders({ page: 1, limit: 1, payment_status: "UNPAID" });
+  const { data: trustInsight               } = useTrustScore();
 
   const recent  = recentData?.items ?? [];
   const byS30   = (bd30?.by_status  as Record<string, number> | undefined) ?? {};
@@ -62,6 +65,10 @@ export default function DashboardPage() {
   const shipped30  = safeNum(byS30.SHIPPED);
   const lowStock   = safeNum(inv?.low_stock_count) + safeNum(inv?.out_of_stock_count);
   const codPending = codData?.total ?? 0;
+
+  const trust        = trustInsight?.payload as unknown as TrustScoreOut | undefined;
+  const trustScore   = trustInsight?.score ?? 0;
+  const trustFlags   = trust?.risk_flags ?? [];
 
   /* ── AI action box: compute 3 tasks ─────────────────────── */
   const tasks: { icon: React.ElementType; text: string; href: string; color: string }[] = [];
@@ -142,6 +149,55 @@ export default function DashboardPage() {
           })}
         </div>
       </div>
+
+      {/* Trust Score mini widget */}
+      {trustInsight ? (
+        <div className="admin-card p-4 border-l-4 border-l-emerald-500">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <Shield className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">{l("বিক্রেতা ট্রাস্ট স্কোর", "Seller Trust Score")}</p>
+                <TrustBadge score={trustScore} size="sm" />
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
+                {trustScore}<span className="text-xs text-muted-foreground font-normal">/100</span>
+              </p>
+            </div>
+          </div>
+          {trustFlags.length > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+              <AlertTriangle className="h-3 w-3 shrink-0" />
+              <span>{trustFlags[0].replace(/_/g, " ")}</span>
+            </div>
+          )}
+          {trustFlags.length === 0 && trustScore > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="h-3 w-3 shrink-0" />
+              <span>{l("কোনো ঝুঁকির সংকেত নেই", "No risk signals detected")}</span>
+            </div>
+          )}
+          {trustScore < 80 && (
+            <Link href="/ai-center" className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline">
+              {l("ট্রাস্ট স্কোর উন্নত করুন", "Improve trust score")} <ArrowRight className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="admin-card p-4 border-l-4 border-l-muted-foreground/20">
+          <div className="flex items-center gap-2.5">
+            <Shield className="h-4 w-4 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {l("ট্রাস্ট স্কোর দেখতে ", "To see trust score ")}
+              <Link href="/ai-center" className="text-primary hover:underline">{l("AI এজেন্ট চালান", "run AI agents")}</Link>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* recent orders + top products */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">

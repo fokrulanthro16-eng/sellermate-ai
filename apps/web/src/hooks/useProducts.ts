@@ -6,7 +6,7 @@ import type { Product, CreateProductPayload, ApiResponse, PaginatedData, Product
 
 const PRODUCTS_KEY = "products";
 
-async function fetchProducts(params: { page?: number; limit?: number; search?: string; is_active?: boolean; category?: string }) {
+async function fetchProducts(params: { page?: number; limit?: number; search?: string; is_active?: boolean; category?: string; low_stock?: boolean; out_of_stock?: boolean }) {
   const { data } = await api.get("/products", { params });
   const items = Array.isArray(data.data) ? data.data : [];
   const meta = data.meta ?? {};
@@ -49,7 +49,7 @@ async function deleteVariant(productId: string, variantId: string) {
   await api.delete(`/products/${productId}/variants/${variantId}`);
 }
 
-export function useProducts(params: { page?: number; limit?: number; search?: string; is_active?: boolean; category?: string } = {}) {
+export function useProducts(params: { page?: number; limit?: number; search?: string; is_active?: boolean; category?: string; low_stock?: boolean; out_of_stock?: boolean } = {}) {
   return useQuery({
     queryKey: [PRODUCTS_KEY, params],
     queryFn: () => fetchProducts(params),

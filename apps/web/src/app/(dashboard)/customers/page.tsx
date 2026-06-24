@@ -41,10 +41,12 @@ const SOURCE_LABELS: Record<string, string> = {
   MANUAL: "Manual", WALK_IN: "Walk-in",
 };
 const TAG_STYLE: Record<string, string> = {
-  VIP:         "bg-amber-100 text-amber-800 border-amber-200",
-  "নিয়মিত":   "bg-blue-100 text-blue-800 border-blue-200",
-  "নতুন":      "bg-green-100 text-green-800 border-green-200",
-  "সন্দেহজনক": "bg-red-100 text-red-700 border-red-200",
+  VIP:          "bg-amber-100 text-amber-800 border-amber-200",
+  "নিয়মিত":    "bg-blue-100 text-blue-800 border-blue-200",
+  "নতুন":       "bg-green-100 text-green-800 border-green-200",
+  "সন্দেহজনক":  "bg-red-100 text-red-700 border-red-200",
+  "ফলো-আপ":     "bg-violet-100 text-violet-800 border-violet-200",
+  "follow-up":  "bg-violet-100 text-violet-800 border-violet-200",
 };
 
 export default function CustomersPage() {

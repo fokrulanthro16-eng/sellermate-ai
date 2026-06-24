@@ -21,7 +21,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
   const orders  = payload.find((p) => p.dataKey === "orders")?.value ?? 0;
 
   return (
-    <div className="glass-card rounded-xl p-3 shadow-premium text-sm min-w-[140px]">
+    <div className="admin-card p-3 text-sm min-w-[140px]">
       <p className="text-muted-foreground text-xs mb-2 font-medium">{label}</p>
       <p className="font-bold text-foreground">
         ৳{Number(revenue).toLocaleString("en-BD")}
@@ -33,7 +33,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
 
 function ChartSkeleton() {
   return (
-    <div className="glass-card rounded-2xl p-5">
+    <div className="admin-card p-4">
       <div className="flex items-center justify-between mb-5">
         <div className="h-5 w-32 rounded-lg bg-muted animate-pulse" />
         <div className="h-5 w-20 rounded-lg bg-muted animate-pulse" />
@@ -56,7 +56,7 @@ export default function RevenueChart({ data, loading, title }: RevenueChartProps
   const primaryFill  = isDark ? "rgba(99,130,255,0.08)"  : "rgba(79,110,247,0.06)";
 
   return (
-    <div className="glass-card rounded-2xl p-5">
+    <div className="admin-card p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
