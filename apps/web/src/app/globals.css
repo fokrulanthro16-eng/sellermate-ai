@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Commerce Admin Light Palette ─────────────────────── */
+    --background: 0 0% 96%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 215 80% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 20% 20%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 91%;
+    --accent-foreground: 220 20% 15%;
+    --destructive: 0 84% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 215 80% 42%;
+    --radius: 0.5rem;
+
+    /* ── Sidebar tokens ─────────────────────────────────────── */
+    --sidebar-bg: 222 25% 14%;
+    --sidebar-border: 222 20% 20%;
+    --sidebar-fg: 220 15% 80%;
+    --sidebar-active-bg: 215 80% 42%;
+    --sidebar-hover-bg: 222 20% 20%;
+  }
+
+  .dark {
+    /* ── Commerce Admin Dark Palette ──────────────────────── */
+    --background: 220 20% 8%;
+    --foreground: 213 20% 88%;
+    --card: 220 20% 11%;
+    --card-foreground: 213 20% 88%;
+    --popover: 220 20% 11%;
+    --popover-foreground: 213 20% 88%;
+    --primary: 215 75% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 16%;
+    --secondary-foreground: 213 20% 88%;
+    --muted: 220 20% 14%;
+    --muted-foreground: 215 15% 50%;
+    --accent: 220 20% 18%;
+    --accent-foreground: 213 20% 88%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 215 75% 55%;
+
+    /* ── Dark Sidebar tokens ────────────────────────────────── */
+    --sidebar-bg: 222 30% 10%;
+    --sidebar-border: 222 20% 16%;
+    --sidebar-fg: 220 15% 70%;
+    --sidebar-active-bg: 215 75% 45%;
+    --sidebar-hover-bg: 222 20% 16%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-size: 14px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  /* ── Compact scrollbar ─────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full bg-border; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/30; }
+}
+
+/* ── Minimal Animations ──────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0);    }
+  50%       { box-shadow: 0 0 12px 3px rgba(37,99,235,0.12); }
+}
+
+.animate-fade-in    { animation: fadeIn  0.2s ease both; }
+.animate-slide-up   { animation: slideUp 0.25s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-pulse-glow { animation: pulseGlow 2.5s ease-in-out infinite; }
+.animate-spin       { animation: spin 1s linear infinite; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.animation-delay-100 { animation-delay: 0.05s; }
+.animation-delay-200 { animation-delay: 0.1s; }
+.animation-delay-300 { animation-delay: 0.15s; }
+.animation-delay-400 { animation-delay: 0.2s; }
+
+/* ── Admin Card ──────────────────────────────────────────── */
+.admin-card {
+  @apply bg-card border border-border rounded-lg;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.admin-card:hover {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.dark .admin-card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* ── Stat Number ─────────────────────────────────────────── */
+.stat-number {
+  @apply text-2xl font-bold tabular-nums text-foreground;
+}
+
+/* ── Table Styles ────────────────────────────────────────── */
+.commerce-table {
+  @apply w-full text-sm;
+}
+.commerce-table thead tr {
+  @apply border-b border-border bg-muted/50;
+}
+.commerce-table thead th {
+  @apply px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide;
+}
+.commerce-table tbody tr {
+  @apply border-b border-border/60 hover:bg-muted/30 transition-colors;
+}
+.commerce-table tbody td {
+  @apply px-3 py-2.5 text-sm;
+}
+
+/* ── Status Badge Colors ─────────────────────────────────── */
+.status-pending   { @apply bg-amber-100 text-amber-800 border border-amber-200; }
+.status-confirmed { @apply bg-blue-100 text-blue-800 border border-blue-200; }
+.status-processing{ @apply bg-indigo-100 text-indigo-800 border border-indigo-200; }
+.status-shipped   { @apply bg-violet-100 text-violet-800 border border-violet-200; }
+.status-delivered { @apply bg-green-100 text-green-800 border border-green-200; }
+.status-cancelled { @apply bg-red-100 text-red-700 border border-red-200; }
+.status-returned  { @apply bg-orange-100 text-orange-800 border border-orange-200; }
+.dark .status-pending   { @apply bg-amber-900/40 text-amber-300 border-amber-800; }
+.dark .status-confirmed { @apply bg-blue-900/40 text-blue-300 border-blue-800; }
+.dark .status-processing{ @apply bg-indigo-900/40 text-indigo-300 border-indigo-800; }
+.dark .status-shipped   { @apply bg-violet-900/40 text-violet-300 border-violet-800; }
+.dark .status-delivered { @apply bg-green-900/40 text-green-300 border-green-800; }
+.dark .status-cancelled { @apply bg-red-900/40 text-red-400 border-red-800; }
+.dark .status-returned  { @apply bg-orange-900/40 text-orange-300 border-orange-800; }
+
+.pay-unpaid  { @apply bg-red-100 text-red-700 border border-red-200; }
+.pay-partial { @apply bg-amber-100 text-amber-800 border border-amber-200; }
+.pay-paid    { @apply bg-green-100 text-green-800 border border-green-200; }
+.pay-refunded{ @apply bg-gray-100 text-gray-700 border border-gray-200; }
+.dark .pay-unpaid  { @apply bg-red-900/40 text-red-400 border-red-800; }
+.dark .pay-partial { @apply bg-amber-900/40 text-amber-300 border-amber-800; }
+.dark .pay-paid    { @apply bg-green-900/40 text-green-300 border-green-800; }
+.dark .pay-refunded{ @apply bg-gray-800 text-gray-300 border-gray-700; }
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.sidebar-nav-item {
+  @apply flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium transition-colors duration-150;
+  color: hsl(var(--sidebar-fg));
+}
+.sidebar-nav-item:hover {
+  background: hsl(var(--sidebar-hover-bg));
+  color: #fff;
+}
+.sidebar-nav-active {
+  background: hsl(var(--sidebar-active-bg));
+  color: #fff;
+}
+
+/* ── Quick Action Button ─────────────────────────────────── */
+.quick-action {
+  @apply flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/40 transition-colors text-xs font-medium text-muted-foreground hover:text-foreground;
+}
+
+/* ── KPI Card ────────────────────────────────────────────── */
+.kpi-card {
+  @apply admin-card p-4;
+}
+.kpi-label {
+  @apply text-xs font-medium text-muted-foreground uppercase tracking-wide;
+}
+.kpi-value {
+  @apply text-2xl font-bold tabular-nums mt-1 text-foreground;
+}
+.kpi-sub {
+  @apply text-xs text-muted-foreground mt-0.5;
+}
+
+/* ── Gradient Utilities ───────────────────────────────────── */
+.gradient-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+.gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+/* ── Glow Effects ────────────────────────────────────────── */
+.shadow-glow-blue { box-shadow: 0 0 16px rgba(37,99,235,0.20); }
+
+/* ── glass-card kept for compatibility ──────────────────── */
+.glass-card {
+  @apply admin-card;
+}
