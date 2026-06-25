@@ -11,6 +11,8 @@ from app.models.review import Review  # noqa: F401
 from app.models.campaign import Campaign  # noqa: F401
 from app.models.integration_setting import IntegrationSettings  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.webhook_event import WebhookEvent  # noqa: F401
+from app.models.background_job import BackgroundJob  # noqa: F401
 
 __all__ = [
     "Merchant",
@@ -29,4 +31,6 @@ __all__ = [
     "Campaign",
     "IntegrationSettings",
     "AuditLog",
+    "WebhookEvent",
+    "BackgroundJob",
 ]
