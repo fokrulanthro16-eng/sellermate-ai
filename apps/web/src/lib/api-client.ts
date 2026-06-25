@@ -26,6 +26,18 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const orig = error.config;
+
+    // Show toast for non-401 errors (401 is handled below via redirect)
+    if (error.response?.status && error.response.status !== 401) {
+      const msg = error.response?.data?.error?.message
+        || error.response?.data?.detail
+        || error.response?.data?.message
+        || `Error ${error.response.status}`;
+      if (typeof window !== "undefined") {
+        import("sonner").then(({ toast }) => toast.error(msg));
+      }
+    }
+
     if (error.response?.status !== 401 || orig._retry) return Promise.reject(error);
 
     if (isRefreshing) {

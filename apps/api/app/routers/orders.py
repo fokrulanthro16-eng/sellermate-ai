@@ -14,6 +14,7 @@ from app.schemas.order import (
     UpdateOrderRequest,
 )
 from app.services import order_service
+from app.services.audit_service import log_action
 
 router = APIRouter(tags=["orders"])
 
@@ -76,6 +77,9 @@ async def change_status(
     order_id: str, body: ChangeStatusRequest, merchant: CurrentMerchant, db: DB
 ):
     order = await order_service.change_status(db, merchant.id, order_id, body)
+    await log_action(db, merchant.id, "status_change", "order",
+                     resource_id=order_id, resource_label=order.order_number,
+                     details={"new_status": body.status.value if hasattr(body.status, "value") else str(body.status)})
     return SuccessResponse(data=OrderOut.model_validate(order))
 
 
@@ -84,10 +88,15 @@ async def record_payment(
     order_id: str, body: RecordPaymentRequest, merchant: CurrentMerchant, db: DB
 ):
     order = await order_service.record_payment(db, merchant.id, order_id, body)
+    await log_action(db, merchant.id, "update", "payment",
+                     resource_id=order_id, resource_label=order.order_number,
+                     details={"payment_status": body.payment_status.value if hasattr(body, "payment_status") else None})
     return SuccessResponse(data=OrderOut.model_validate(order))
 
 
 @router.delete("/{order_id}", response_model=SuccessResponse[OrderOut])
 async def cancel_order(order_id: str, merchant: CurrentMerchant, db: DB):
     order = await order_service.cancel_order(db, merchant.id, order_id)
+    await log_action(db, merchant.id, "delete", "order",
+                     resource_id=order_id, resource_label=order.order_number)
     return SuccessResponse(data=OrderOut.model_validate(order))

@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Warehouse, ShoppingCart,
   Users, BarChart3, Bot, Shield, Settings, Zap, Star, Wand2,
-  TrendingUp, Megaphone, FileBarChart2, Bell, Plug,
+  TrendingUp, Megaphone, FileBarChart2, Bell, Plug, Activity, Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LangContext";
+import { useHealth } from "@/hooks/useHealth";
 import type { TranslationKey } from "@/lib/i18n";
 
 interface NavItem {
@@ -41,6 +42,11 @@ const commerceNav: NavItem[] = [
   { href: "/integrations",   icon: Plug,          labelKey: "integrations"   },
 ];
 
+const systemNav: NavItem[] = [
+  { href: "/activity",  icon: Activity, labelKey: "activity" },
+  { href: "/security",  icon: Lock,     labelKey: "security" },
+];
+
 function NavLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const { t } = useLang();
@@ -63,6 +69,7 @@ function NavLink({ item }: { item: NavItem }) {
 export default function Sidebar() {
   const pathname = usePathname();
   const { t } = useLang();
+  const { data: health } = useHealth();
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:z-50"
@@ -107,11 +114,19 @@ export default function Sidebar() {
           </p>
           {commerceNav.map((item) => <NavLink key={item.href} item={item} />)}
         </div>
+
+        {/* System */}
+        <div className="space-y-0.5">
+          <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/30">
+            {t("systemMenu")}
+          </p>
+          {systemNav.map((item) => <NavLink key={item.href} item={item} />)}
+        </div>
       </nav>
 
       {/* Footer */}
       <div className="px-2 pb-4" style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}>
-        <div className="pt-3">
+        <div className="pt-3 space-y-1">
           <Link
             href="/settings"
             className={cn("sidebar-nav-item", pathname === "/settings" && "sidebar-nav-active")}
@@ -119,6 +134,15 @@ export default function Sidebar() {
             <Settings className="h-4 w-4 shrink-0" />
             <span>{t("settings")}</span>
           </Link>
+          {/* Health indicator */}
+          <div className="flex items-center gap-2 px-3 py-1.5">
+            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0",
+              !health ? "bg-slate-400" : health.status === "ok" ? "bg-emerald-400 animate-pulse" : "bg-amber-400 animate-pulse"
+            )} />
+            <span className="text-[10px] text-white/40">
+              {!health ? "Connecting..." : health.status === "ok" ? "All systems OK" : "Degraded"}
+            </span>
+          </div>
         </div>
       </div>
     </aside>

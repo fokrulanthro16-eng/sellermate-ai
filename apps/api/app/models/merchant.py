@@ -9,6 +9,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin
 
 
+class MerchantRole(str, PyEnum):
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    STAFF = "STAFF"
+    VIEWER = "VIEWER"
+
+
 class BusinessType(str, PyEnum):
     FASHION_CLOTHING = "FASHION_CLOTHING"
     ELECTRONICS = "ELECTRONICS"
@@ -69,6 +76,11 @@ class Merchant(Base, TimestampMixin):
     )
     onboarding_step: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     onboarding_done: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    role: Mapped[MerchantRole] = mapped_column(
+        SAEnum(MerchantRole, name="merchant_role_enum"),
+        default=MerchantRole.OWNER,
+        nullable=False,
+    )
 
     # Relationships
     products: Mapped[list["Product"]] = relationship(  # type: ignore[name-defined]

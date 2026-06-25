@@ -10,6 +10,7 @@ from app.models.strategic_insight import StrategicInsight  # noqa: F401
 from app.models.review import Review  # noqa: F401
 from app.models.campaign import Campaign  # noqa: F401
 from app.models.integration_setting import IntegrationSettings  # noqa: F401
+from app.models.audit_log import AuditLog  # noqa: F401
 
 __all__ = [
     "Merchant",
@@ -27,4 +28,5 @@ __all__ = [
     "Review",
     "Campaign",
     "IntegrationSettings",
+    "AuditLog",
 ]

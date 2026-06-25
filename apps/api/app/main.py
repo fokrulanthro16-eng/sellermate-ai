@@ -26,12 +26,15 @@ from app.db.redis import close_redis, init_redis
 from app.routers import (
     ai_provider,
     analytics,
+    audit_logs,
+    backup,
     integrations,
     assistant,
     auth,
     campaigns,
     commerce,
     customers,
+    health as health_router,
     hermit,
     inventory,
     merchant,
@@ -116,6 +119,9 @@ app.include_router(reports.router, prefix=f"{API_PREFIX}/reports", tags=["report
 app.include_router(notifications.router, prefix=f"{API_PREFIX}/notifications", tags=["notifications"])
 app.include_router(integrations.router, prefix=f"{API_PREFIX}/integrations", tags=["integrations"])
 app.include_router(webhooks.router, prefix=f"{API_PREFIX}/webhooks", tags=["webhooks"])
+app.include_router(health_router.router, prefix=f"{API_PREFIX}/health", tags=["health"])
+app.include_router(audit_logs.router, prefix=f"{API_PREFIX}/audit-logs", tags=["audit"])
+app.include_router(backup.router, prefix=f"{API_PREFIX}/backup", tags=["backup"])
 
 
 @app.get("/health", tags=["health"])

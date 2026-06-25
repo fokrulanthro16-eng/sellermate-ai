@@ -23,6 +23,8 @@ export const translations = {
     commerceMenu: "কমার্স",
     integrations: "ইন্টিগ্রেশন",
     integrationsMenu: "ইন্টিগ্রেশন",
+    activity: "কার্যকলাপ",
+    systemMenu: "সিস্টেম",
 
     // Auth
     login: "লগইন",
@@ -223,6 +225,8 @@ export const translations = {
     commerceMenu: "Commerce",
     integrations: "Integrations",
     integrationsMenu: "Integrations",
+    activity: "Activity",
+    systemMenu: "System",
 
     // Auth
     login: "Login",
