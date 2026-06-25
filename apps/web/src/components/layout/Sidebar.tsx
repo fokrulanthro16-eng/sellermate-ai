@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Warehouse, ShoppingCart,
-  Users, BarChart3, Bot, Shield, Settings, Zap, Star,
+  Users, BarChart3, Bot, Shield, Settings, Zap, Star, Wand2,
+  TrendingUp, Megaphone, FileBarChart2, Bell, Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LangContext";
@@ -28,7 +29,16 @@ const coreNav: NavItem[] = [
 const aiNav: NavItem[] = [
   { href: "/assistant",  icon: Bot,    labelKey: "assistant" },
   { href: "/ai-center",  icon: Shield, labelKey: "aiCenter"  },
+  { href: "/ai-tools",   icon: Wand2,  labelKey: "aiTools"   },
   { href: "/reviews",    icon: Star,   labelKey: "reviews"   },
+];
+
+const commerceNav: NavItem[] = [
+  { href: "/commerce",       icon: TrendingUp,    labelKey: "commerce"       },
+  { href: "/campaigns",      icon: Megaphone,     labelKey: "campaigns"      },
+  { href: "/reports",        icon: FileBarChart2, labelKey: "reports"        },
+  { href: "/notifications",  icon: Bell,          labelKey: "notifications"  },
+  { href: "/integrations",   icon: Plug,          labelKey: "integrations"   },
 ];
 
 function NavLink({ item }: { item: NavItem }) {
@@ -88,6 +98,14 @@ export default function Sidebar() {
             {t("aiMenu")}
           </p>
           {aiNav.map((item) => <NavLink key={item.href} item={item} />)}
+        </div>
+
+        {/* Commerce */}
+        <div className="space-y-0.5">
+          <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/30">
+            {t("commerceMenu")}
+          </p>
+          {commerceNav.map((item) => <NavLink key={item.href} item={item} />)}
         </div>
       </nav>
 

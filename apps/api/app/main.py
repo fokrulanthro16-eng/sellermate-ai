@@ -24,16 +24,23 @@ from app.core.exceptions import (
 )
 from app.db.redis import close_redis, init_redis
 from app.routers import (
+    ai_provider,
     analytics,
+    integrations,
     assistant,
     auth,
+    campaigns,
+    commerce,
     customers,
     hermit,
     inventory,
     merchant,
+    notifications,
     orders,
     products,
+    reports,
     reviews,
+    seller_tools,
     strategic,
     webhooks,
 )
@@ -99,8 +106,15 @@ app.include_router(customers.router, prefix=f"{API_PREFIX}/customers", tags=["cu
 app.include_router(analytics.router, prefix=f"{API_PREFIX}/analytics", tags=["analytics"])
 app.include_router(assistant.router, prefix=f"{API_PREFIX}/assistant", tags=["assistant"])
 app.include_router(hermit.router, prefix=f"{API_PREFIX}/ai", tags=["hermit"])
+app.include_router(ai_provider.router, prefix=f"{API_PREFIX}/ai", tags=["ai_provider"])
 app.include_router(strategic.router, prefix=f"{API_PREFIX}/ai/strategic", tags=["strategic"])
 app.include_router(reviews.router, prefix=f"{API_PREFIX}/reviews", tags=["reviews"])
+app.include_router(seller_tools.router, prefix=f"{API_PREFIX}/ai/seller-tools", tags=["seller_tools"])
+app.include_router(commerce.router, prefix=f"{API_PREFIX}/commerce", tags=["commerce"])
+app.include_router(campaigns.router, prefix=f"{API_PREFIX}/campaigns", tags=["campaigns"])
+app.include_router(reports.router, prefix=f"{API_PREFIX}/reports", tags=["reports"])
+app.include_router(notifications.router, prefix=f"{API_PREFIX}/notifications", tags=["notifications"])
+app.include_router(integrations.router, prefix=f"{API_PREFIX}/integrations", tags=["integrations"])
 app.include_router(webhooks.router, prefix=f"{API_PREFIX}/webhooks", tags=["webhooks"])
 
 

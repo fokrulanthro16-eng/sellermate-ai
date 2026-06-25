@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # Google Gemini
     gemini_api_key: str = ""
 
+    # OpenAI
+    openai_api_key: str = ""
+
     # WhatsApp Cloud API
     whatsapp_access_token: str = ""
     whatsapp_phone_number_id: str = ""

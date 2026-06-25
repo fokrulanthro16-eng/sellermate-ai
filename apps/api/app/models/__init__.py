@@ -8,6 +8,8 @@ from app.models.assistant import Conversation, Message  # noqa: F401
 from app.models.hermit import HermitInsight  # noqa: F401
 from app.models.strategic_insight import StrategicInsight  # noqa: F401
 from app.models.review import Review  # noqa: F401
+from app.models.campaign import Campaign  # noqa: F401
+from app.models.integration_setting import IntegrationSettings  # noqa: F401
 
 __all__ = [
     "Merchant",
@@ -23,4 +25,6 @@ __all__ = [
     "HermitInsight",
     "StrategicInsight",
     "Review",
+    "Campaign",
+    "IntegrationSettings",
 ]
