@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import Boolean, DateTime, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, UniqueConstraint, Index
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -82,6 +82,13 @@ class Merchant(Base, TimestampMixin):
         nullable=False,
     )
 
+    # Public storefront fields (Phase 9)
+    store_slug: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
+    store_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    store_banner_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+
     # Relationships
     products: Mapped[list["Product"]] = relationship(  # type: ignore[name-defined]
         "Product", back_populates="merchant", cascade="all, delete-orphan"
@@ -99,6 +106,8 @@ class Merchant(Base, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("email", name="uq_merchants_email"),
         UniqueConstraint("phone", name="uq_merchants_phone"),
+        Index("ix_merchants_store_slug", "store_slug"),
+        Index("ix_merchants_location", "latitude", "longitude"),
     )
 
     def __repr__(self) -> str:

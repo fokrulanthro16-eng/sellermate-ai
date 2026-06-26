@@ -44,13 +44,14 @@ async def list_products(
 
     offset = (filters.page - 1) * filters.limit
     result = await db.execute(
-        query.order_by(Product.created_at.desc()).offset(offset).limit(filters.limit)
+        query.options(selectinload(Product.variants))
+        .order_by(Product.created_at.desc()).offset(offset).limit(filters.limit)
     )
     products = result.scalars().all()
 
-    from app.schemas.product import ProductOut
+    from app.schemas.product import ProductWithVariants
     return PaginatedResponse(
-        data=[ProductOut.model_validate(p) for p in products],
+        data=[ProductWithVariants.model_validate(p) for p in products],
         meta=PaginatedMeta(
             page=filters.page,
             limit=filters.limit,

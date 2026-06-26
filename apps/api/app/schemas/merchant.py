@@ -11,6 +11,13 @@ class UpdateMerchantRequest(BaseModel):
     district: str | None = Field(None, max_length=100)
     division: str | None = Field(None, max_length=100)
     whatsapp_phone: str | None = Field(None, max_length=20)
+    # Public store fields
+    store_slug: str | None = Field(None, min_length=3, max_length=100, pattern=r"^[a-z0-9-]+$")
+    store_description: str | None = Field(None, max_length=1000)
+    store_banner_url: str | None = Field(None, max_length=500)
+    logo_url: str | None = Field(None, max_length=500)
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class OnboardingStepRequest(BaseModel):

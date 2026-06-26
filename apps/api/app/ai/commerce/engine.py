@@ -12,7 +12,7 @@ from sqlalchemy import Date, cast, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.customer import Customer
-from app.models.order import Order, OrderItem, OrderStatus
+from app.models.order import Order, OrderItem, OrderStatus, PaymentMethod, PaymentStatus
 from app.models.product import Product, ProductVariant
 
 
@@ -732,9 +732,88 @@ class CommerceEngine:
     async def get_notifications(self, db: AsyncSession, merchant_id: str) -> list[dict]:
         notifications: list[dict] = []
 
-        # Low stock alerts
+        # ── Pending orders needing action ─────────────────────────────────────
+        pending_q = select(func.count()).where(
+            Order.merchant_id == merchant_id,
+            Order.status == OrderStatus.PENDING,
+        )
+        pending_count: int = (await db.execute(pending_q)).scalar() or 0
+        if pending_count >= 3:
+            notifications.append({
+                "id": "pending_orders",
+                "type": "PENDING_ORDERS",
+                "priority": "HIGH",
+                "title_en": f"{pending_count} Orders Awaiting Processing",
+                "title_bn": f"{pending_count}টি অর্ডার প্রক্রিয়াকরণের অপেক্ষায়",
+                "body_en": "Review and confirm pending orders to avoid delivery delays.",
+                "body_bn": "ডেলিভারি বিলম্ব এড়াতে পেন্ডিং অর্ডারগুলো রিভিউ করুন।",
+                "action": "/orders",
+            })
+        elif pending_count > 0:
+            notifications.append({
+                "id": "pending_orders",
+                "type": "PENDING_ORDERS",
+                "priority": "MEDIUM",
+                "title_en": f"{pending_count} Pending Order{'s' if pending_count > 1 else ''}",
+                "title_bn": f"{pending_count}টি পেন্ডিং অর্ডার",
+                "body_en": "Confirm and assign courier to pending orders.",
+                "body_bn": "পেন্ডিং অর্ডারে কুরিয়ার নির্ধারণ করুন।",
+                "action": "/orders",
+            })
+
+        # ── COD collection due ─────────────────────────────────────────────────
+        cod_due_q = select(
+            func.count().label("cnt"),
+            func.sum(Order.due_amount).label("total_due"),
+        ).where(
+            Order.merchant_id == merchant_id,
+            Order.payment_method == PaymentMethod.COD,
+            Order.payment_status == PaymentStatus.UNPAID,
+            Order.status.in_([OrderStatus.CONFIRMED, OrderStatus.PROCESSING, OrderStatus.SHIPPED]),
+        )
+        cod_row = (await db.execute(cod_due_q)).one_or_none()
+        cod_count = cod_row.cnt if cod_row else 0
+        cod_due = float(cod_row.total_due or 0) if cod_row else 0.0
+        if cod_count and cod_count > 0:
+            notifications.append({
+                "id": "cod_collection",
+                "type": "COD_COLLECTION",
+                "priority": "MEDIUM",
+                "title_en": f"৳{cod_due:,.0f} COD Collection Pending",
+                "title_bn": f"৳{cod_due:,.0f} কালেকশন বাকি",
+                "body_en": f"{cod_count} COD orders in transit — follow up with riders for collection.",
+                "body_bn": f"{cod_count}টি কোড অর্ডার ডেলিভারিতে — রাইডার থেকে কালেকশন নিন।",
+                "action": "/orders",
+            })
+
+        # ── Unpaid dues across all methods ────────────────────────────────────
+        unpaid_q = select(
+            func.count().label("cnt"),
+            func.sum(Order.due_amount).label("total"),
+        ).where(
+            Order.merchant_id == merchant_id,
+            Order.payment_status == PaymentStatus.UNPAID,
+            Order.due_amount > 0,
+            Order.status.notin_([OrderStatus.CANCELLED, OrderStatus.PENDING]),
+        )
+        unpaid_row = (await db.execute(unpaid_q)).one_or_none()
+        unpaid_count = unpaid_row.cnt if unpaid_row else 0
+        unpaid_total = float(unpaid_row.total or 0) if unpaid_row else 0.0
+        if unpaid_count and unpaid_count > 0 and cod_count == 0:
+            notifications.append({
+                "id": "unpaid_dues",
+                "type": "PAYMENT_DUE",
+                "priority": "MEDIUM",
+                "title_en": f"৳{unpaid_total:,.0f} Payment Due",
+                "title_bn": f"৳{unpaid_total:,.0f} পেমেন্ট বাকি",
+                "body_en": f"{unpaid_count} confirmed orders have outstanding payments.",
+                "body_bn": f"{unpaid_count}টি কনফার্মড অর্ডারের পেমেন্ট এখনও বাকি।",
+                "action": "/orders",
+            })
+
+        # ── Low stock alerts (ProductVariant-based if available) ──────────────
         forecasts = await self.inventory_forecast(db, merchant_id)
-        for f in forecasts:
+        for f in forecasts[:5]:
             if f.status == "CRITICAL":
                 notifications.append({
                     "id": f"stock_{f.variant_id}",
@@ -758,22 +837,64 @@ class CommerceEngine:
                     "action": "/inventory",
                 })
 
-        # Churn alerts
+        # ── Churn alerts ──────────────────────────────────────────────────────
         churn = await self.churn_risk(db, merchant_id)
         high_risk = [c for c in churn if c.risk_level == "HIGH"]
         if high_risk:
+            others = len(high_risk) - 1
+            body_en = (
+                f"{high_risk[0].customer_name} and {others} others haven't ordered in 90+ days."
+                if others > 0
+                else f"{high_risk[0].customer_name} hasn't ordered in 90+ days."
+            )
+            body_bn = (
+                f"{high_risk[0].customer_name} সহ {others} জন ৯০+ দিন ধরে নিষ্ক্রিয়।"
+                if others > 0
+                else f"{high_risk[0].customer_name} ৯০+ দিন ধরে নিষ্ক্রিয়।"
+            )
             notifications.append({
                 "id": "churn_high",
                 "type": "CHURN_RISK",
                 "priority": "HIGH",
-                "title_en": f"{len(high_risk)} Customers at High Churn Risk",
+                "title_en": f"{len(high_risk)} Customer{'s' if len(high_risk) > 1 else ''} at Risk of Churning",
                 "title_bn": f"{len(high_risk)} জন গ্রাহক হারানোর ঝুঁকিতে",
-                "body_en": f"{high_risk[0].customer_name} and {len(high_risk)-1} others inactive for 90+ days.",
-                "body_bn": f"{high_risk[0].customer_name} সহ {len(high_risk)-1} জন ৯০+ দিন ধরে নিষ্ক্রিয়।",
+                "body_en": body_en,
+                "body_bn": body_bn,
+                "action": "/reports",
+            })
+        medium_risk = [c for c in churn if c.risk_level == "MEDIUM"]
+        if medium_risk and not high_risk:
+            notifications.append({
+                "id": "churn_medium",
+                "type": "CHURN_RISK",
+                "priority": "MEDIUM",
+                "title_en": f"{len(medium_risk)} Customers Need Re-engagement",
+                "title_bn": f"{len(medium_risk)} জন গ্রাহককে পুনরায় সক্রিয় করুন",
+                "body_en": "These customers haven't bought in 30–60 days. Send a promo.",
+                "body_bn": "এই গ্রাহকরা ৩০–৬০ দিন ধরে কেনেননি। প্রমোশন পাঠান।",
                 "action": "/reports",
             })
 
-        # Revenue trend
+        # ── Top seller milestone ──────────────────────────────────────────────
+        top_q = select(Product.name, Product.total_sold).where(
+            Product.merchant_id == merchant_id,
+            Product.is_published.is_(True),
+            Product.total_sold > 10,
+        ).order_by(Product.total_sold.desc()).limit(1)
+        top_row = (await db.execute(top_q)).one_or_none()
+        if top_row:
+            notifications.append({
+                "id": "top_seller",
+                "type": "BEST_SELLER",
+                "priority": "LOW",
+                "title_en": f"Best Seller: {top_row.name}",
+                "title_bn": f"সেরা পণ্য: {top_row.name}",
+                "body_en": f"{top_row.total_sold} units sold — keep it well stocked.",
+                "body_bn": f"{top_row.total_sold}টি বিক্রি হয়েছে — স্টক ঠিক রাখুন।",
+                "action": "/products",
+            })
+
+        # ── Revenue trend ─────────────────────────────────────────────────────
         forecast = await self.revenue_forecast(db, merchant_id)
         if forecast.trend == "FALLING" and forecast.current_30d > 0:
             notifications.append({
@@ -793,8 +914,8 @@ class CommerceEngine:
                 "priority": "LOW",
                 "title_en": f"Revenue Growing ({forecast.growth_pct:+.1f}%)",
                 "title_bn": f"রাজস্ব বাড়ছে ({forecast.growth_pct:+.1f}%)",
-                "body_en": "Great momentum! Ensure stock is ready to meet demand.",
-                "body_bn": "চমৎকার! চাহিদা পূরণে স্টক প্রস্তুত রাখুন।",
+                "body_en": "Great momentum! Ensure stock levels are ready to meet demand.",
+                "body_bn": "চমৎকার গতি! চাহিদা পূরণে স্টক প্রস্তুত রাখুন।",
                 "action": "/commerce",
             })
 

@@ -23,7 +23,10 @@ export const translations = {
     commerceMenu: "কমার্স",
     integrations: "ইন্টিগ্রেশন",
     integrationsMenu: "ইন্টিগ্রেশন",
+    storeBuilder: "স্টোর বিল্ডার",
+    agents: "এআই এজেন্ট",
     activity: "কার্যকলাপ",
+    deployment: "ডিপ্লয়মেন্ট",
     systemMenu: "সিস্টেম",
 
     // Auth
@@ -225,7 +228,10 @@ export const translations = {
     commerceMenu: "Commerce",
     integrations: "Integrations",
     integrationsMenu: "Integrations",
+    storeBuilder: "Store Builder",
+    agents: "AI Agents",
     activity: "Activity",
+    deployment: "Deployment",
     systemMenu: "System",
 
     // Auth

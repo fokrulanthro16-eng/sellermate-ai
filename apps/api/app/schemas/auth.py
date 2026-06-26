@@ -101,6 +101,12 @@ class MerchantOut(BaseModel):
     plan_expires_at: datetime | None
     onboarding_step: int
     onboarding_done: bool
+    # Public store fields
+    store_slug: str | None = None
+    store_description: str | None = None
+    store_banner_url: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     created_at: datetime
     updated_at: datetime
 

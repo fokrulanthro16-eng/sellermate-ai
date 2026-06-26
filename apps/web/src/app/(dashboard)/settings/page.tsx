@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Save, Store, Lock, SlidersHorizontal, Sun, Moon, Monitor } from "lucide-react";
+import { Loader2, Save, Store, Lock, SlidersHorizontal, Sun, Moon, Monitor, Info, Zap } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +109,10 @@ export default function SettingsPage() {
             <TabsTrigger value="preferences" className="flex-1 gap-1.5 rounded-lg">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {label("পছন্দ", "Preferences")}
+            </TabsTrigger>
+            <TabsTrigger value="about" className="flex-1 gap-1.5 rounded-lg">
+              <Info className="h-3.5 w-3.5" />
+              {label("পরিচিতি", "About")}
             </TabsTrigger>
           </TabsList>
 
@@ -299,6 +303,66 @@ export default function SettingsPage() {
                     <div key={opt.value} className="flex-1 h-9 rounded-xl bg-muted/50 animate-pulse" />
                   ))}
                 </div>
+              </div>
+            </div>
+          </TabsContent>
+          {/* About tab */}
+          <TabsContent value="about" className="mt-4">
+            <div className="admin-card p-5 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Zap className="h-4 w-4 text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">{label("সফটওয়্যার পরিচিতি", "About SellerMate")}</h3>
+                  <p className="text-xs text-muted-foreground">{label("সংস্করণ ও মোড তথ্য", "Version and mode information")}</p>
+                </div>
+              </div>
+
+              {/* Beta badge */}
+              <div className="rounded-xl bg-violet-500/10 border border-violet-500/20 p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
+                  <Zap className="h-5 w-5 text-violet-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm font-bold text-foreground">SellerMate AI</span>
+                    <span className="px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 text-[10px] font-bold border border-violet-500/30">
+                      BETA
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {label(
+                      "বাংলাদেশি ই-কমার্স বিক্রেতাদের জন্য সম্পূর্ণ AI সমাধান",
+                      "Complete AI solution for Bangladeshi e-commerce sellers"
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Info rows */}
+              <div className="space-y-3 text-sm">
+                {[
+                  { label: label("সংস্করণ", "Version"),    value: "1.0.0" },
+                  { label: label("ফেজ", "Phase"),           value: "11.5 — Beta Test Mode" },
+                  { label: label("অ্যাপ মোড", "App Mode"),  value: "Beta (Safe Mode)" },
+                  { label: label("পেমেন্ট", "Payments"),    value: label("স্যান্ডবক্স / মক", "Sandbox / Mock") },
+                  { label: label("কুরিয়ার", "Courier"),     value: label("সিমুলেটেড", "Simulated") },
+                  { label: label("AI প্রদানকারী", "AI"),    value: label("মক ফলব্যাক সক্রিয়", "Mock fallback active") },
+                  { label: label("স্টোরেজ", "Storage"),     value: label("লোকাল প্রিভিউ", "Local preview") },
+                ].map(({ label: l, value }) => (
+                  <div key={l} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                    <span className="text-muted-foreground">{l}</span>
+                    <span className="font-medium text-foreground text-right">{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-600 dark:text-amber-400">
+                {label(
+                  "বেটা মোডে কোনো বাস্তব অর্থ লেনদেন, কুরিয়ার বুকিং বা বাহ্যিক চার্জ হয় না।",
+                  "In Beta Mode, no real money moves, no real courier bookings, no external charges."
+                )}
               </div>
             </div>
           </TabsContent>

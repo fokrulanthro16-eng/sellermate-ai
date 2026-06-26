@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, AlertTriangle, TrendingDown, TrendingUp, Package, ChevronRight } from "lucide-react";
+import { Bell, AlertTriangle, TrendingDown, TrendingUp, Package, ChevronRight, ClipboardList, Wallet, Star, CreditCard } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLang } from "@/contexts/LangContext";
 import { useNotifications, type Notification } from "@/hooks/useNotifications";
@@ -8,10 +8,14 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
-  LOW_STOCK:       Package,
-  CHURN_RISK:      AlertTriangle,
-  REVENUE_ALERT:   TrendingDown,
+  LOW_STOCK:        Package,
+  CHURN_RISK:       AlertTriangle,
+  REVENUE_ALERT:    TrendingDown,
   REVENUE_POSITIVE: TrendingUp,
+  PENDING_ORDERS:   ClipboardList,
+  COD_COLLECTION:   Wallet,
+  PAYMENT_DUE:      CreditCard,
+  BEST_SELLER:      Star,
 };
 
 const PRIORITY_COLORS: Record<string, string> = {

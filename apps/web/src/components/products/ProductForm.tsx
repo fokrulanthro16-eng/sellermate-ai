@@ -1,13 +1,16 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useUploadImage } from "@/hooks/useMerchant";
 import type { Product } from "@/types";
 
 const CATEGORIES = [
@@ -37,7 +40,7 @@ type FormData = z.infer<typeof schema>;
 
 interface ProductFormProps {
   product?: Product;
-  onSubmit: (data: FormData) => Promise<void>;
+  onSubmit: (data: FormData & { image_urls?: string[] }) => Promise<void>;
   loading?: boolean;
 }
 
@@ -52,8 +55,29 @@ export default function ProductForm({ product, onSubmit, loading }: ProductFormP
     } : undefined,
   });
 
+  const [images, setImages] = useState<string[]>(product?.image_urls || []);
+  const uploadMut = useUploadImage();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await uploadMut.mutateAsync(file);
+      setImages((prev) => [...prev, result.url]);
+      toast.success("Image uploaded");
+    } catch {
+      toast.error("Image upload failed");
+    }
+    e.target.value = "";
+  }
+
+  function handleFormSubmit(data: FormData) {
+    return onSubmit({ ...data, image_urls: images });
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">পণ্যের নাম</Label>
         <Input id="name" placeholder="পণ্যের নাম লিখুন" {...register("name")} />
@@ -86,7 +110,32 @@ export default function ProductForm({ product, onSubmit, loading }: ProductFormP
         <Input id="description" placeholder="পণ্যের বিবরণ" {...register("description")} />
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading}>
+      {/* Image upload */}
+      <div className="space-y-2">
+        <Label>পণ্যের ছবি</Label>
+        <div className="flex flex-wrap gap-2">
+          {images.map((url, i) => (
+            <div key={i} className="relative w-16 h-16">
+              <img src={url} alt="" className="w-full h-full object-cover rounded-lg border border-gray-200" />
+              <button type="button" onClick={() => setImages((p) => p.filter((_, j) => j !== i))}
+                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                <X className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          ))}
+          {images.length < 5 && (
+            <button type="button" onClick={() => fileRef.current?.click()}
+              className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors">
+              {uploadMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              <span className="text-[9px]">Add</span>
+            </button>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+        <p className="text-xs text-gray-400">Up to 5 images · JPG, PNG, WebP</p>
+      </div>
+
+      <Button type="submit" className="w-full" disabled={loading || uploadMut.isPending}>
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         {product ? "আপডেট করুন" : "পণ্য তৈরি করুন"}
       </Button>

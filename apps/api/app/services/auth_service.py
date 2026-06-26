@@ -1,4 +1,5 @@
 import random
+import re
 import string
 import time
 
@@ -18,6 +19,14 @@ from app.core.security import (
 )
 from app.models.merchant import Merchant
 from app.schemas.auth import AuthResponse, LoginRequest, MerchantOut, RegisterRequest, TokenPair
+
+
+def _slugify(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s-]", "", text, flags=re.UNICODE)
+    text = re.sub(r"[\s_-]+", "-", text)
+    text = re.sub(r"^-+|-+$", "", text)
+    return text[:40] or "store"
 
 settings = get_settings()
 
@@ -45,6 +54,7 @@ async def register(db: AsyncSession, redis: Redis, data: RegisterRequest) -> Aut
     )
     db.add(merchant)
     await db.flush()
+    merchant.store_slug = f"{_slugify(data.business_name)}-{merchant.id[:6]}"
 
     tokens = await _issue_tokens(redis, merchant.id)
     return AuthResponse(merchant=MerchantOut.model_validate(merchant), tokens=tokens)

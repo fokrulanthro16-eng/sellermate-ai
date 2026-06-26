@@ -72,6 +72,7 @@ export interface Product {
   description?: string;
   base_price: string;
   is_active: boolean;
+  image_urls?: string[];
   variants: ProductVariant[];
   created_at: string;
   updated_at: string;

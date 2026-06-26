@@ -1,0 +1,14 @@
+"use client";
+
+import { useEffect } from "react";
+
+export default function PwaInit() {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/" })
+        .catch(() => {}); // silent — SW optional
+    }
+  }, []);
+  return null;
+}

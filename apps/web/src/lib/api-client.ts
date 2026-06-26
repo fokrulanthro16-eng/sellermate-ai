@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getToken, getRefreshToken, setTokens, clearTokens } from "@/lib/auth";
+import { getToken, getRefreshToken, setTokens, clearTokens, isDemoMode } from "@/lib/auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
@@ -27,12 +27,17 @@ api.interceptors.response.use(
   async (error) => {
     const orig = error.config;
 
-    // Show toast for non-401 errors (401 is handled below via redirect)
+    // In local demo mode, suppress error toasts and never redirect to /login.
+    // 401s are expected because the synthetic demo token is not a real JWT.
+    if (isDemoMode()) return Promise.reject(error);
+
+    // Show toast for non-401 errors
     if (error.response?.status && error.response.status !== 401) {
-      const msg = error.response?.data?.error?.message
-        || error.response?.data?.detail
-        || error.response?.data?.message
-        || `Error ${error.response.status}`;
+      const msg =
+        error.response?.data?.error?.message ||
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        `Error ${error.response.status}`;
       if (typeof window !== "undefined") {
         import("sonner").then(({ toast }) => toast.error(msg));
       }

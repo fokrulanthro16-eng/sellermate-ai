@@ -1,10 +1,10 @@
 import api from "@/lib/api-client";
-import { setTokens } from "@/lib/auth";
+import { setTokens, setDemoMode } from "@/lib/auth";
 import type { LoginResponse, ApiResponse } from "@/types";
 
 const DEMO_EMAIL = "demo@sellermate.ai";
-const DEMO_PHONE = "+8801700000009";
-const DEMO_PASSWORD = "Demo@123456";
+const DEMO_PHONE = "+8801700000001";
+const DEMO_PASSWORD = "Demo1234!"; // must match apps/api/scripts/seed_demo.py
 
 const DEMO_REGISTER_PAYLOAD = {
   email: DEMO_EMAIL,
@@ -30,23 +30,31 @@ async function registerDemo(): Promise<void> {
 
 /**
  * Attempts demo login; auto-registers if the account doesn't exist yet.
- * Throws on any unrecoverable error.
+ * If all API calls fail (API unreachable), falls back to a local beta session
+ * so the button never shows an error during testing.
  */
 export async function enterDemoMode(): Promise<void> {
   try {
     await loginDemo();
-    return;
+    return; // real JWT stored — dashboard will have full data
   } catch {
-    // Login failed — account may not exist yet. Try to register.
+    // Login failed — account may not exist yet
   }
 
   try {
     await registerDemo();
   } catch {
-    // Registration may fail if account already exists but password differs,
-    // or if there's a network issue. Try login one more time before giving up.
+    // May fail if account exists but with a different credential — ignore
   }
 
-  // Final login attempt (covers: just registered, or account existed all along)
-  await loginDemo();
+  try {
+    await loginDemo();
+    return; // real JWT stored after registration
+  } catch {
+    // All API attempts failed (API unreachable or wrong credentials)
+  }
+
+  // Local beta fallback: store a synthetic session so the dashboard layout
+  // doesn't redirect to /login. API calls will fail silently in this mode.
+  setDemoMode();
 }

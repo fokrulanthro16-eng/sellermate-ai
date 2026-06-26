@@ -96,3 +96,22 @@ async def export_summary(merchant: CurrentMerchant, db: DB) -> dict:
         r = await db.execute(text(f"SELECT COUNT(*) FROM {table} WHERE merchant_id = :mid"), {"mid": merchant.id})
         counts[table] = r.scalar() or 0
     return {"success": True, "data": {"counts": counts, "merchant_id": merchant.id}}
+
+
+@router.post("/import")
+async def import_data(body: dict, merchant: CurrentMerchant) -> dict:
+    """Import placeholder — validates structure but does not write data in mock mode."""
+    products = body.get("products", [])
+    customers = body.get("customers", [])
+    orders = body.get("orders", [])
+    return {
+        "success": True,
+        "data": {
+            "message": "Import received (mock — no data written)",
+            "received": {
+                "products": len(products),
+                "customers": len(customers),
+                "orders": len(orders),
+            },
+        },
+    }

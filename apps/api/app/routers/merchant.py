@@ -1,6 +1,9 @@
 from fastapi import APIRouter
+from sqlalchemy import func, select
 
 from app.core.dependencies import CurrentMerchant, DB
+from app.models.order import Order
+from app.models.product import Product
 from app.schemas.auth import MerchantOut
 from app.schemas.common import SuccessResponse
 from app.schemas.merchant import (
@@ -59,3 +62,65 @@ async def whatsapp_status(merchant: CurrentMerchant):
             phone=merchant.whatsapp_phone,
         )
     )
+
+
+@router.get("/launch-checklist")
+async def launch_checklist(merchant: CurrentMerchant, db: DB) -> dict:
+    """Return seller launch readiness checklist."""
+    product_count_r = await db.execute(
+        select(func.count()).where(Product.merchant_id == merchant.id, Product.is_active.is_(True))
+    )
+    product_count = product_count_r.scalar() or 0
+
+    order_count_r = await db.execute(
+        select(func.count()).where(Order.merchant_id == merchant.id)
+    )
+    order_count = order_count_r.scalar() or 0
+
+    items = [
+        {
+            "id": "profile",
+            "label": "Profile complete",
+            "done": bool(merchant.owner_name and merchant.district and merchant.address),
+        },
+        {
+            "id": "store_live",
+            "label": "Public store live",
+            "done": bool(merchant.store_slug),
+        },
+        {
+            "id": "products",
+            "label": "Products added",
+            "done": product_count >= 1,
+            "detail": f"{product_count} product(s) added",
+        },
+        {
+            "id": "payment",
+            "label": "Payment method configured",
+            "done": bool(merchant.whatsapp_phone),
+            "detail": "Link payment via Integrations",
+        },
+        {
+            "id": "delivery",
+            "label": "Delivery method selected",
+            "done": bool(merchant.district),
+            "detail": "Set in Integrations > Courier",
+        },
+        {
+            "id": "first_order",
+            "label": "First order received",
+            "done": order_count >= 1,
+            "detail": f"{order_count} order(s) total",
+        },
+    ]
+
+    done = sum(1 for i in items if i["done"])
+    return {
+        "success": True,
+        "data": {
+            "items": items,
+            "done": done,
+            "total": len(items),
+            "pct": round(done / len(items) * 100),
+        },
+    }

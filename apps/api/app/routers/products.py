@@ -17,7 +17,7 @@ from app.services import product_service
 router = APIRouter(tags=["products"])
 
 
-@router.get("", response_model=PaginatedResponse[ProductOut])
+@router.get("", response_model=PaginatedResponse[ProductWithVariants])
 async def list_products(
     merchant: CurrentMerchant,
     db: DB,

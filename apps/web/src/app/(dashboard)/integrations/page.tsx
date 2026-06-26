@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Truck, CreditCard, Store, Bell, FileText,
   CheckCircle2, XCircle, Loader2, RefreshCw, Save, Zap, Play,
-  Download, Package,
+  Download, Package, ChevronDown, Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,52 +16,125 @@ import {
 } from "@/hooks/useIntegrations";
 import { cn } from "@/lib/utils";
 
-// ── Status badge ─────────────────────────────────────────────────────────────
+// ── Mode badge (Mock / Ready / Live) ─────────────────────────────────────────
 
-function ProviderBadge({ p }: { p: ProviderInfo }) {
-  const isReal = p.is_configured;
+type ProviderMode = "Mock" | "Ready" | "Live";
+
+function ModeBadge({ mode }: { mode: ProviderMode }) {
   return (
-    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 border border-slate-100">
-      <span className="text-sm font-medium text-slate-700">{p.display_name}</span>
-      <span className={cn(
-        "flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full",
-        isReal ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-               : "bg-amber-50 text-amber-700 border border-amber-200"
-      )}>
-        {isReal ? <CheckCircle2 className="h-3 w-3" /> : <Zap className="h-3 w-3" />}
-        {isReal ? "Live" : "Mock"}
-      </span>
-    </div>
+    <span className={cn(
+      "flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border",
+      mode === "Live"  && "bg-emerald-50 text-emerald-700 border-emerald-200",
+      mode === "Ready" && "bg-blue-50 text-blue-700 border-blue-200",
+      mode === "Mock"  && "bg-amber-50 text-amber-700 border-amber-200",
+    )}>
+      {mode === "Live"  && <CheckCircle2 className="h-2.5 w-2.5" />}
+      {mode === "Ready" && <Zap className="h-2.5 w-2.5" />}
+      {mode === "Mock"  && <XCircle className="h-2.5 w-2.5" />}
+      {mode}
+    </span>
   );
 }
 
-// ── Test button ───────────────────────────────────────────────────────────────
+// ── Env var requirements per provider ────────────────────────────────────────
 
-function TestBtn({ domain, provider, label }: { domain: string; provider: string; label: string }) {
+const PROVIDER_ENV: Record<string, string[]> = {
+  pathao:      ["PATHAO_CLIENT_ID", "PATHAO_CLIENT_SECRET", "PATHAO_USERNAME", "PATHAO_PASSWORD"],
+  steadfast:   ["STEADFAST_API_KEY", "STEADFAST_SECRET_KEY"],
+  redx:        ["REDX_API_TOKEN"],
+  bkash:       ["BKASH_APP_KEY", "BKASH_APP_SECRET", "BKASH_USERNAME", "BKASH_PASSWORD"],
+  nagad:       ["NAGAD_MERCHANT_ID", "NAGAD_MERCHANT_NUMBER", "NAGAD_PUBLIC_KEY", "NAGAD_PRIVATE_KEY"],
+  sslcommerz:  ["SSLCOMMERZ_STORE_ID", "SSLCOMMERZ_STORE_PASSWORD"],
+};
+
+// ── Expandable provider card ──────────────────────────────────────────────────
+
+function ProviderCard({ p, domain, showWebhook }: { p: ProviderInfo; domain: string; showWebhook?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const [testState, setTestState] = useState<"idle" | "ok" | "fail">("idle");
+  const [copied, setCopied] = useState(false);
   const test = useTestConnection();
-  const [result, setResult] = useState<string | null>(null);
 
-  const run = async () => {
-    setResult(null);
+  const mode: ProviderMode = !p.is_configured ? "Mock" : testState === "ok" ? "Live" : "Ready";
+  const envVars = PROVIDER_ENV[p.name] ?? [];
+  const webhookUrl = showWebhook ? `https://your-domain.com/api/v1/payment/${p.name}/callback` : null;
+
+  const runTest = async () => {
     try {
-      const r = await test.mutateAsync({ domain, provider });
-      setResult(r.success ? `✓ ${r.message}` : `✗ ${r.message}`);
+      const r = await test.mutateAsync({ domain, provider: p.name });
+      setTestState(r.success ? "ok" : "fail");
     } catch {
-      setResult("✗ Connection error");
+      setTestState("fail");
     }
-    setTimeout(() => setResult(null), 4000);
+    setTimeout(() => setTestState("idle"), 6000);
+  };
+
+  const copyWebhook = () => {
+    if (webhookUrl) {
+      navigator.clipboard.writeText(webhookUrl).catch(() => {});
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={run} disabled={test.isPending} className="h-7 text-xs gap-1.5">
-        {test.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
-        Test {label}
-      </Button>
-      {result && (
-        <span className={cn("text-xs", result.startsWith("✓") ? "text-emerald-600" : "text-red-500")}>
-          {result}
-        </span>
+    <div className="border border-slate-200 rounded-lg overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span className="text-sm font-medium text-slate-700">{p.display_name}</span>
+        <div className="flex items-center gap-2">
+          <ModeBadge mode={mode} />
+          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", expanded && "rotate-180")} />
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-3 py-3 space-y-3 border-t border-slate-100">
+          {envVars.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Required .env keys
+              </p>
+              {envVars.map((key) => (
+                <div key={key} className="flex items-center gap-1.5 font-mono text-[11px] bg-slate-100 px-2.5 py-1.5 rounded">
+                  <span className="text-slate-600 shrink-0">{key}=</span>
+                  <span className="text-slate-400 tracking-wider">{"•".repeat(10)}</span>
+                  <span className="ml-auto shrink-0">
+                    {p.is_configured
+                      ? <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                      : <XCircle className="h-3 w-3 text-slate-300" />}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {webhookUrl && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Callback / Webhook URL
+              </p>
+              <div className="flex items-start gap-2 font-mono text-[11px] bg-blue-50 border border-blue-100 px-2.5 py-2 rounded text-blue-700 break-all">
+                <span className="flex-1">{webhookUrl}</span>
+                <button onClick={copyWebhook} className="shrink-0 text-blue-500 hover:text-blue-700 transition-colors ml-1">
+                  {copied ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-400">Paste this URL in your provider dashboard as the callback/IPN URL</p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 pt-0.5">
+            <Button variant="outline" size="sm" onClick={runTest} disabled={test.isPending} className="h-7 text-xs gap-1.5">
+              {test.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+              Test Connection
+            </Button>
+            {testState === "ok"   && <span className="text-xs text-emerald-600">✓ Live — connection verified</span>}
+            {testState === "fail" && <span className="text-xs text-red-500">✗ Failed — check .env keys</span>}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -102,9 +175,10 @@ function CourierTab({ providers, lang, savedConfig }: { providers: ProviderInfo[
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3">
+      <div className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-700">{l("কুরিয়ার প্রদানকারী", "Courier Providers")}</h3>
-        {providers.map((p) => <ProviderBadge key={p.name} p={p} />)}
+        <p className="text-xs text-slate-400">{l("প্রতিটি প্রদানকারী বিস্তারিত দেখতে ক্লিক করুন", "Click a provider to see required keys and test connection")}</p>
+        {providers.map((p) => <ProviderCard key={p.name} p={p} domain="courier" />)}
       </div>
 
       <div className="space-y-2">
@@ -120,15 +194,7 @@ function CourierTab({ providers, lang, savedConfig }: { providers: ProviderInfo[
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{l("সংযোগ পরীক্ষা", "Test Connection")}</h3>
-        <div className="space-y-2">
-          {providers.map((p) => <TestBtn key={p.name} domain="courier" provider={p.name} label={p.display_name} />)}
-        </div>
-      </div>
-
       <div className="pt-1 border-t border-slate-100">
-        <p className="text-xs text-slate-400 mb-3">{l("বাস্তব সংযোগের জন্য .env ফাইলে কী যোগ করুন", "Add real API keys in .env to enable live mode")}</p>
         <Button onClick={handleSave} disabled={save.isPending} className="gap-2">
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {saved ? l("সংরক্ষিত ✓", "Saved ✓") : l("সেটিংস সংরক্ষণ করুন", "Save Settings")}
@@ -161,9 +227,10 @@ function PaymentTab({ providers, lang, savedConfig }: { providers: ProviderInfo[
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3">
+      <div className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-700">{l("পেমেন্ট গেটওয়ে", "Payment Gateways")}</h3>
-        {providers.map((p) => <ProviderBadge key={p.name} p={p} />)}
+        <p className="text-xs text-slate-400">{l("প্রতিটি গেটওয়ে বিস্তারিত ও ওয়েবহুক URL দেখতে ক্লিক করুন", "Click a gateway to see required keys, webhook URL and test connection")}</p>
+        {providers.map((p) => <ProviderCard key={p.name} p={p} domain="payment" showWebhook />)}
       </div>
 
       <div className="space-y-2">
@@ -179,15 +246,7 @@ function PaymentTab({ providers, lang, savedConfig }: { providers: ProviderInfo[
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{l("সংযোগ পরীক্ষা", "Test Connection")}</h3>
-        <div className="space-y-2">
-          {providers.map((p) => <TestBtn key={p.name} domain="payment" provider={p.name} label={p.display_name} />)}
-        </div>
-      </div>
-
       <div className="pt-1 border-t border-slate-100">
-        <p className="text-xs text-slate-400 mb-3">{l("বাস্তব গেটওয়ের জন্য API কী যোগ করুন", "Add real gateway API keys in .env")}</p>
         <Button onClick={handleSave} disabled={save.isPending} className="gap-2">
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {saved ? l("সংরক্ষিত ✓", "Saved ✓") : l("সেটিংস সংরক্ষণ করুন", "Save Settings")}
@@ -221,9 +280,9 @@ function MarketplaceTab({ providers, lang }: { providers: ProviderInfo[]; lang: 
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3">
+      <div className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-700">{l("মার্কেটপ্লেস সংযোগ", "Marketplace Connections")}</h3>
-        {providers.map((p) => <ProviderBadge key={p.name} p={p} />)}
+        {providers.map((p) => <ProviderCard key={p.name} p={p} domain="marketplace" />)}
       </div>
 
       <div className="space-y-2">
@@ -242,7 +301,7 @@ function MarketplaceTab({ providers, lang }: { providers: ProviderInfo[]; lang: 
                 {sync.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
                 {l("অর্ডার সিঙ্ক", "Sync Orders")}
               </Button>
-              <TestBtn domain="marketplace" provider={p.name} label="" />
+              {/* test is inside ProviderCard above */}
             </div>
           ))}
         </div>
@@ -304,9 +363,9 @@ function NotificationTab({ providers, lang }: { providers: ProviderInfo[]; lang:
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3">
+      <div className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-700">{l("বিজ্ঞপ্তি চ্যানেল", "Notification Channels")}</h3>
-        {providers.map((p) => <ProviderBadge key={p.name} p={p} />)}
+        {providers.map((p) => <ProviderCard key={p.name} p={p} domain="notification" />)}
       </div>
 
       <div className="space-y-3">

@@ -1,9 +1,17 @@
+import logging
+import time
 from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":%(message)s}',
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
 
 from app.core.config import get_settings
 from app.core.exceptions import (
@@ -24,6 +32,7 @@ from app.core.exceptions import (
 )
 from app.db.redis import close_redis, init_redis
 from app.routers import (
+    agents,
     ai_provider,
     analytics,
     audit_logs,
@@ -38,14 +47,17 @@ from app.routers import (
     hermit,
     inventory,
     jobs,
+    media,
     merchant,
     notifications,
     orders,
     products,
+    public,
     reports,
     reviews,
     seller_tools,
     strategic,
+    system as system_router,
     webhooks,
 )
 
@@ -75,6 +87,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_access_log = logging.getLogger("sellermate.access")
+
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = round((time.perf_counter() - start) * 1000, 1)
+    _access_log.info(
+        '"method":"%s","path":"%s","status":%d,"ms":%.1f',
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+    from app.routers.system import record_request
+    record_request(request.method, request.url.path, response.status_code)
+    return response
 
 app.add_exception_handler(NotFoundException, not_found_handler)
 app.add_exception_handler(ConflictException, conflict_handler)
@@ -121,9 +152,13 @@ app.include_router(notifications.router, prefix=f"{API_PREFIX}/notifications", t
 app.include_router(integrations.router, prefix=f"{API_PREFIX}/integrations", tags=["integrations"])
 app.include_router(webhooks.router, prefix=f"{API_PREFIX}/webhooks", tags=["webhooks"])
 app.include_router(jobs.router, prefix=f"{API_PREFIX}/jobs", tags=["jobs"])
+app.include_router(system_router.router, prefix=f"{API_PREFIX}/system", tags=["system"])
 app.include_router(health_router.router, prefix=f"{API_PREFIX}/health", tags=["health"])
 app.include_router(audit_logs.router, prefix=f"{API_PREFIX}/audit-logs", tags=["audit"])
 app.include_router(backup.router, prefix=f"{API_PREFIX}/backup", tags=["backup"])
+app.include_router(public.router, prefix=f"{API_PREFIX}/public", tags=["public"])
+app.include_router(media.router, prefix=f"{API_PREFIX}/media", tags=["media"])
+app.include_router(agents.router, prefix=f"{API_PREFIX}/agents", tags=["agents"])
 
 
 @app.get("/health", tags=["health"])

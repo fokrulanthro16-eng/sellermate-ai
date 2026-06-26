@@ -17,7 +17,7 @@ import type { TrustScoreOut } from "@/types";
 import {
   ShoppingCart, Clock, Truck, AlertTriangle,
   TrendingUp, Banknote, Package, Plus, CheckCircle2,
-  ArrowRight, Sparkles, Shield,
+  ArrowRight, Sparkles, Shield, ExternalLink,
 } from "lucide-react";
 
 /* ── tiny status pill ─────────────────────────────────────── */
@@ -99,14 +99,21 @@ export default function DashboardPage() {
     <div className="space-y-4 max-w-[1500px]">
 
       {/* header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <h1 className="text-lg font-bold">{l("ড্যাশবোর্ড", "Dashboard")}</h1>
           <p className="text-xs text-muted-foreground">{format(new Date(), "dd MMM yyyy")} · {l("আজকের সারাংশ", "Today's summary")}</p>
         </div>
-        <Button asChild size="sm" className="gap-1.5 h-8 text-xs">
-          <Link href="/orders"><Plus className="h-3.5 w-3.5" />{l("নতুন অর্ডার", "New Order")}</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" variant="outline" className="gap-1.5 h-8 text-xs border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
+            <a href="/store/demo-shop" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3.5 w-3.5" />{l("ডেমো স্টোর", "Demo Store")}
+            </a>
+          </Button>
+          <Button asChild size="sm" className="gap-1.5 h-8 text-xs">
+            <Link href="/orders"><Plus className="h-3.5 w-3.5" />{l("নতুন অর্ডার", "New Order")}</Link>
+          </Button>
+        </div>
       </div>
 
       {/* KPI row */}

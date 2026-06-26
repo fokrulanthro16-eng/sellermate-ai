@@ -28,3 +28,6 @@ uvicorn_stdout.txt
 
 dist/
 build/
+
+*.tsbuildinfo
+.turbo/

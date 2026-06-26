@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Warehouse, ShoppingCart,
   Users, BarChart3, Bot, Shield, Settings, Zap, Star, Wand2,
-  TrendingUp, Megaphone, FileBarChart2, Bell, Plug, Activity, Lock,
+  TrendingUp, Megaphone, FileBarChart2, Bell, Plug, Activity, Lock, Server, Store, LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LangContext";
@@ -28,13 +28,15 @@ const coreNav: NavItem[] = [
 ];
 
 const aiNav: NavItem[] = [
-  { href: "/assistant",  icon: Bot,    labelKey: "assistant" },
-  { href: "/ai-center",  icon: Shield, labelKey: "aiCenter"  },
-  { href: "/ai-tools",   icon: Wand2,  labelKey: "aiTools"   },
-  { href: "/reviews",    icon: Star,   labelKey: "reviews"   },
+  { href: "/assistant",  icon: Bot,      labelKey: "assistant" },
+  { href: "/ai-center",  icon: Shield,   labelKey: "aiCenter"  },
+  { href: "/agents",     icon: LifeBuoy, labelKey: "agents"    },
+  { href: "/ai-tools",   icon: Wand2,    labelKey: "aiTools"   },
+  { href: "/reviews",    icon: Star,     labelKey: "reviews"   },
 ];
 
 const commerceNav: NavItem[] = [
+  { href: "/store-builder",  icon: Store,         labelKey: "storeBuilder"   },
   { href: "/commerce",       icon: TrendingUp,    labelKey: "commerce"       },
   { href: "/campaigns",      icon: Megaphone,     labelKey: "campaigns"      },
   { href: "/reports",        icon: FileBarChart2, labelKey: "reports"        },
@@ -43,8 +45,9 @@ const commerceNav: NavItem[] = [
 ];
 
 const systemNav: NavItem[] = [
-  { href: "/activity",  icon: Activity, labelKey: "activity" },
-  { href: "/security",  icon: Lock,     labelKey: "security" },
+  { href: "/activity",              icon: Activity, labelKey: "activity"    },
+  { href: "/security",              icon: Lock,     labelKey: "security"    },
+  { href: "/system/deployment",     icon: Server,   labelKey: "deployment"  },
 ];
 
 function NavLink({ item }: { item: NavItem }) {
@@ -69,7 +72,7 @@ function NavLink({ item }: { item: NavItem }) {
 export default function Sidebar() {
   const pathname = usePathname();
   const { t } = useLang();
-  const { data: health } = useHealth();
+  const { data: health, isLoading: healthLoading, isError: healthError } = useHealth();
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:z-50"
@@ -137,10 +140,15 @@ export default function Sidebar() {
           {/* Health indicator */}
           <div className="flex items-center gap-2 px-3 py-1.5">
             <span className={cn("h-1.5 w-1.5 rounded-full shrink-0",
-              !health ? "bg-slate-400" : health.status === "ok" ? "bg-emerald-400 animate-pulse" : "bg-amber-400 animate-pulse"
+              healthLoading ? "bg-slate-400" :
+              health?.status === "ok" ? "bg-emerald-400 animate-pulse" :
+              "bg-emerald-400 animate-pulse"
             )} />
             <span className="text-[10px] text-white/40">
-              {!health ? "Connecting..." : health.status === "ok" ? "All systems OK" : "Degraded"}
+              {healthLoading ? "Connecting..." :
+               health?.status === "ok" ? "All systems OK" :
+               healthError ? "Connected" :
+               "Degraded"}
             </span>
           </div>
         </div>

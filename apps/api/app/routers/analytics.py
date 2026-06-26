@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Query
 
@@ -37,10 +37,9 @@ async def customer_metrics(
 
 
 def _parse_dates(from_date: str, to_date: str) -> tuple[datetime, datetime]:
-    return (
-        datetime.fromisoformat(from_date),
-        datetime.fromisoformat(to_date),
-    )
+    start = datetime.fromisoformat(from_date)
+    end = datetime.fromisoformat(to_date) + timedelta(days=1) - timedelta(seconds=1)
+    return start, end
 
 
 @router.get("/overview", response_model=SuccessResponse[OverviewMetrics])
