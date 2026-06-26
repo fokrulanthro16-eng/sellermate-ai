@@ -213,6 +213,15 @@ npm run dev
 
 The frontend is now running at `http://localhost:3000`.
 
+> **Port already in use?** Next.js will auto-increment — check your terminal:
+> ```
+> ▲ Next.js 15.x.x
+> - Local: http://localhost:3001   ← use this URL instead
+> ```
+> Or force a specific port: `npm run dev -- -p 3002`
+>
+> No change to `.env.local` is needed — the backend URL stays the same.
+
 ---
 
 ## Environment Variables
@@ -309,6 +318,90 @@ Full test flows: see [TESTING_GUIDE.md](TESTING_GUIDE.md)
 
 ---
 
+## Troubleshooting
+
+### Backend not running
+**Symptom:** Browser shows "Network Error" or blank dashboard.
+```bash
+# Confirm backend is alive
+curl http://localhost:8000/api/v1/health
+# Expected: {"status":"ok",...}
+
+# If not running, restart it
+cd apps/api
+.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# Mac/Linux: python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Demo login failed / "Invalid credentials"
+**Cause:** Demo account not seeded, or wrong database.
+```bash
+cd apps/api
+python scripts/seed_demo.py   # creates demo@sellermate.ai / Demo1234!
+python scripts/seed_beta.py   # seeds 90+ products and 50+ orders
+```
+
+### Network Error / AxiosError in browser console
+**Cause:** Frontend can't reach backend — usually a missing `.env.local`.
+```bash
+cd apps/web
+cp .env.local.example .env.local
+# File must contain: NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+# Then restart: npm run dev
+```
+
+### Frontend port changed (3001, 3002, etc.)
+**Cause:** Port 3000 was already taken when you ran `npm run dev`.
+
+The API URL does **not** change — only the browser URL does. Check your terminal for the actual local URL and open that instead. No `.env.local` changes needed.
+
+### Marketplace shows "No stores found"
+**Cause:** Demo data not seeded.
+```bash
+cd apps/api
+python scripts/seed_demo.py
+python scripts/seed_beta.py
+```
+Refresh the page. If still empty, check backend is running.
+
+### Store Builder stuck on "Loading store settings…"
+**Cause:** Stale auth token or expired session.
+
+1. Log out → log back in with `demo@sellermate.ai` / `Demo1234!`
+2. Or click **"ডেমো হিসেবে ঢুকুন"** again from `/login`
+3. If still stuck, open DevTools → Application → Local Storage → clear all → refresh
+
+### Database empty / dashboard shows 0 orders
+**Cause:** Migrations not run or seed skipped.
+```bash
+cd apps/api
+alembic upgrade head          # apply all migrations
+python scripts/seed_demo.py   # create demo account
+python scripts/seed_beta.py   # populate data
+```
+
+### .env.local missing or wrong
+**Symptom:** App loads but all data is blank; console shows CORS or 404 errors.
+```bash
+cd apps/web
+cp .env.local.example .env.local
+# Verify it contains exactly:
+# NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+```
+Restart the frontend after any `.env.local` change.
+
+### Python / pip not found
+Ensure you have activated the virtual environment before running any `python` commands:
+```bash
+# Windows
+cd apps/api && .venv\Scripts\Activate.ps1
+
+# Mac / Linux
+cd apps/api && source .venv/bin/activate
+```
+
+---
+
 ## How Testers Should Give Feedback
 
 1. Work through [TESTING_GUIDE.md](TESTING_GUIDE.md)
@@ -317,6 +410,21 @@ Full test flows: see [TESTING_GUIDE.md](TESTING_GUIDE.md)
 4. Or open a GitHub Issue with the label `beta-feedback`
 
 Please include: what page, what steps, what you expected, what happened, and a screenshot if possible.
+
+---
+
+## Creating the Release Tag
+
+```bash
+# Commit all changes first, then:
+git tag -a v0.9-beta -m "Public beta release v0.9-beta"
+git push origin main
+git push origin v0.9-beta
+```
+
+On GitHub: **Releases → Draft a new release → choose tag `v0.9-beta`**
+- Title: `SellerMate AI v0.9-beta — Public Beta`
+- Description: paste content from [RELEASE_NOTES.md](RELEASE_NOTES.md)
 
 ---
 
