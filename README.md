@@ -1,5 +1,21 @@
 # SellerMate AI
 
+> **⚠️ PUBLIC BETA — v0.9-beta**
+>
+> This is a pre-release build for testing and feedback only. Not for production use.
+>
+> | What is mocked in beta | Details |
+> |---|---|
+> | 💳 Payments | No real charges — bKash, Nagad, SSLCommerz all simulate success |
+> | 🚚 Courier booking | No real parcels — Pathao, Steadfast, REDX return fake tracking IDs |
+> | 📱 OTP / SMS | OTP printed to backend console, not sent to your phone |
+> | 🤖 AI content | Works without API keys — uses rule-based fallback automatically |
+> | 🖼️ Image uploads | Base64 local storage — configure S3/R2 for persistence |
+>
+> **No real money moves. No real courier bookings. Safe to test freely.**
+
+---
+
 **AI-powered Commerce OS for Bangladeshi e-commerce sellers.**
 
 SellerMate AI gives small online sellers a single dashboard to run their entire business — orders, inventory, customers, analytics, AI content, and a public storefront — without needing multiple tools or technical expertise.
