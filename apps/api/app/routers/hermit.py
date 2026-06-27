@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from app.core.dependencies import CurrentMerchant, DB
+from app.core.rate_limit import merchant_rate_limiter
 from app.models.hermit import InsightSeverity, InsightType
 from app.schemas.common import SuccessResponse
 from app.schemas.hermit import HermitInsightOut, HermitRunResult
@@ -9,7 +10,11 @@ from app.services import hermit_service
 router = APIRouter(prefix="/hermit", tags=["hermit"])
 
 
-@router.post("/run", response_model=SuccessResponse[HermitRunResult])
+@router.post(
+    "/run",
+    response_model=SuccessResponse[HermitRunResult],
+    dependencies=[Depends(merchant_rate_limiter("hermit_run", max_calls=5, window_seconds=60))],
+)
 async def run_hermit(merchant: CurrentMerchant, db: DB):
     result = await hermit_service.run_analysis(db, merchant.id)
     return SuccessResponse(data=HermitRunResult(**result))

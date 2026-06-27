@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import BadRequestException, NotFoundException
+from app.core.exceptions import BadRequestException, NotFoundException, OutOfStockException
 from app.models.inventory import InventoryChangeType, InventoryLog
 from app.models.order import OrderItem
 from app.models.product import Product, ProductVariant
@@ -183,6 +183,7 @@ async def deduct_for_order(
 ) -> None:
     for item in items:
         if not item.variant_id:
+            # Products without variants have no tracked stock; skip.
             continue
         result = await db.execute(
             select(ProductVariant)
@@ -191,12 +192,21 @@ async def deduct_for_order(
                 ProductVariant.id == item.variant_id,
                 Product.merchant_id == merchant_id,
             )
+            .with_for_update()  # Row-level lock: prevents concurrent oversell
         )
         variant = result.scalar_one_or_none()
         if not variant:
-            continue
+            raise BadRequestException(
+                f"Variant {item.variant_id} not found — order cannot be completed"
+            )
 
-        new_qty = max(0, variant.stock_quantity - item.quantity)
+        if variant.stock_quantity < item.quantity:
+            raise OutOfStockException(
+                f"Insufficient stock for '{variant.name}': "
+                f"{variant.stock_quantity} unit(s) available, {item.quantity} requested"
+            )
+
+        new_qty = variant.stock_quantity - item.quantity
         log = InventoryLog(
             merchant_id=merchant_id,
             variant_id=variant.id,
@@ -224,6 +234,7 @@ async def restore_for_cancelled_order(
                 ProductVariant.id == item.variant_id,
                 Product.merchant_id == merchant_id,
             )
+            .with_for_update()  # Lock to prevent races on concurrent cancel/restore
         )
         variant = result.scalar_one_or_none()
         if not variant:

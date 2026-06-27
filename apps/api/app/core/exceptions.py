@@ -36,6 +36,11 @@ class UnprocessableException(HTTPException):
         super().__init__(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
 
 
+class OutOfStockException(HTTPException):
+    def __init__(self, detail: str = "One or more items are out of stock") -> None:
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
 class RateLimitException(HTTPException):
     def __init__(self, detail: str = "Too many requests", retry_after: int = 60) -> None:
         super().__init__(
@@ -74,6 +79,10 @@ async def bad_request_handler(request: Request, exc: BadRequestException) -> JSO
 
 
 async def unprocessable_handler(request: Request, exc: UnprocessableException) -> JSONResponse:
+    return _error_response(exc)
+
+
+async def out_of_stock_handler(request: Request, exc: OutOfStockException) -> JSONResponse:
     return _error_response(exc)
 
 

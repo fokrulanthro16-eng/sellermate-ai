@@ -119,6 +119,21 @@ async def create_order(
                     f"Insufficient stock for '{product.name}' — "
                     f"{variant.stock_quantity} available, {item.quantity} requested"
                 )
+        else:
+            # Variant-id omitted: reject if the product has variants so stock
+            # is never silently skipped during deduction.
+            has_variants = (
+                await db.execute(
+                    select(func.count())
+                    .select_from(ProductVariant)
+                    .where(ProductVariant.product_id == product.id)
+                )
+            ).scalar_one() > 0
+            if has_variants:
+                raise BadRequestException(
+                    f"variant_id is required for '{product.name}' — "
+                    "product has variants and stock is tracked per variant"
+                )
 
         resolved.append((product, variant, item.quantity))
 

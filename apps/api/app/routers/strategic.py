@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from app.core.dependencies import CurrentMerchant, DB
 from app.core.exceptions import NotFoundException
+from app.core.rate_limit import merchant_rate_limiter
 from app.schemas.common import SuccessResponse
 from app.schemas.strategic import (
     FraudReportOut,
@@ -16,7 +17,12 @@ from app.services import strategic_service
 router = APIRouter(tags=["strategic"])
 
 
-@router.post("/run", response_model=SuccessResponse[StrategicRunResult], status_code=200)
+@router.post(
+    "/run",
+    response_model=SuccessResponse[StrategicRunResult],
+    status_code=200,
+    dependencies=[Depends(merchant_rate_limiter("strategic_run", max_calls=5, window_seconds=60))],
+)
 async def run_strategic_agents(merchant: CurrentMerchant, db: DB):
     result = await strategic_service.run_agents(db, merchant.id)
     return SuccessResponse(data=result)
@@ -49,7 +55,11 @@ async def get_fraud_report(merchant: CurrentMerchant, db: DB):
     return SuccessResponse(data=insight)
 
 
-@router.get("/price-check", response_model=SuccessResponse[PriceCheckOut])
+@router.get(
+    "/price-check",
+    response_model=SuccessResponse[PriceCheckOut],
+    dependencies=[Depends(merchant_rate_limiter("strategic_price_check", max_calls=20, window_seconds=60))],
+)
 async def get_price_check(merchant: CurrentMerchant, db: DB):
     from app.ai.strategic_agents.price_intelligence import PriceIntelligence
     result = await PriceIntelligence().run(db, merchant.id)

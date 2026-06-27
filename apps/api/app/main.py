@@ -19,6 +19,7 @@ from app.core.exceptions import (
     ConflictException,
     ForbiddenException,
     NotFoundException,
+    OutOfStockException,
     RateLimitException,
     UnauthorizedException,
     UnprocessableException,
@@ -26,6 +27,7 @@ from app.core.exceptions import (
     conflict_handler,
     forbidden_handler,
     not_found_handler,
+    out_of_stock_handler,
     rate_limit_handler,
     unauthorized_handler,
     unprocessable_handler,
@@ -66,6 +68,12 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    errors = settings.validate_production_config()
+    if errors:
+        bullet_list = "\n".join(f"  • {e}" for e in errors)
+        raise RuntimeError(
+            f"FATAL: Production configuration is invalid — fix before starting:\n{bullet_list}"
+        )
     await init_redis()
     yield
     await close_redis()
@@ -113,6 +121,7 @@ app.add_exception_handler(UnauthorizedException, unauthorized_handler)
 app.add_exception_handler(ForbiddenException, forbidden_handler)
 app.add_exception_handler(BadRequestException, bad_request_handler)
 app.add_exception_handler(UnprocessableException, unprocessable_handler)
+app.add_exception_handler(OutOfStockException, out_of_stock_handler)
 app.add_exception_handler(RateLimitException, rate_limit_handler)
 
 

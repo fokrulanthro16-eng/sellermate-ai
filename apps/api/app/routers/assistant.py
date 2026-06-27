@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from app.core.dependencies import CurrentMerchant, DB
+from app.core.rate_limit import merchant_rate_limiter
 from app.schemas.assistant import ChatRequest, ConversationOut, MessageOut
 from app.schemas.common import MessageResponse, SuccessResponse
 from app.services import assistant_service
@@ -36,7 +37,10 @@ async def get_messages(conversation_id: str, merchant: CurrentMerchant, db: DB):
     return SuccessResponse(data=[MessageOut.model_validate(m) for m in messages])
 
 
-@router.post("/conversations/{conversation_id}/chat")
+@router.post(
+    "/conversations/{conversation_id}/chat",
+    dependencies=[Depends(merchant_rate_limiter("ai_chat", max_calls=20, window_seconds=60))],
+)
 async def chat(conversation_id: str, body: ChatRequest, merchant: CurrentMerchant, db: DB):
     async def event_stream():
         async for chunk in assistant_service.stream_chat(

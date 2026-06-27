@@ -1,12 +1,13 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.ai.seller_tools_agent import SellerToolsAgent
 from app.core.dependencies import CurrentMerchant, DB
 from app.core.exceptions import NotFoundException
+from app.core.rate_limit import merchant_rate_limiter
 from app.models.customer import Customer
 from app.models.order import Order
 from app.models.product import Product
@@ -66,7 +67,11 @@ async def list_tool_products(merchant: CurrentMerchant, db: DB):
     ])
 
 
-@router.post("/generate", response_model=SuccessResponse[GenerateOut])
+@router.post(
+    "/generate",
+    response_model=SuccessResponse[GenerateOut],
+    dependencies=[Depends(merchant_rate_limiter("seller_tools_gen", max_calls=20, window_seconds=60))],
+)
 async def generate_content(req: GenerateRequest, merchant: CurrentMerchant, db: DB):
     product_dict: dict | None = None
     if req.product_id:
